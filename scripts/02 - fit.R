@@ -151,17 +151,33 @@ ode <- function(parms, N = 100000, end_time = 2020) {
       return(list(c( 
         dN_RL, dN_RH, dN_UL, dN_UH, dI_RL, dI_RH, dI_UL, dI_UH, dO_RL, dO_RH, dO_UL, dO_UH, dM_RL, dM_RH, dM_UL, dM_UH, dRM_RL, dRM_RH, dRM_UL, dRM_UH,
         dS_RL, dS_RH, dS_UL, dS_UH, dRS_RL, dRS_RH, dRS_UL, dRS_UH, dC_RL, dC_RH, dC_UL, dC_UH, dRC_RL, dRC_RH, dRC_UL, dRC_UH, dP_RL, dP_RH, dP_UL, dP_UH),
-        Pop = (N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+O_RL+O_RH+O_UL+O_UH+M_RL+M_RH+M_UL+M_UH+dRM_RL+dRM_RH+dRM_UL+dRM_UH+S_RL+S_RH+S_UL+S_UH+RS_RL+RS_RH+RS_UL+RS_UH+C_RL+C_RH+C_UL+C_UH+RC_RL+RC_RH+RC_UL+RC_UH+P_RL+P_RH+P_UL+P_UH), # Total population
-        Sub = (S_RL+S_RH+S_UL+S_UH), # Subclinical TB (per 100k)
-        Cln = (C_RL+C_RH+C_UL+C_UH), # Clinical TB (per 100k)
-        TBc = (S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # All TB (per 100k)
-        Mor = (force_func_omega(time)*(C_RL+C_RH+C_UL+C_UH)), # Clinical TB mortality per time (per 100k)
-        Dxs = (force_func_iota(time)*(C_RL+C_RH+C_UL+C_UH)), # Notifications cTB per time in adults (per 100k)
-        Spr = (S_RL+S_RH+S_UL+S_UH)/(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion scTB
-        URs = (S_UL+S_UH)/(S_RL+S_RH), # Relative urban/rural in scTB
-        URc = (C_UL+C_UH)/(C_RL+C_RH), # Relative urban/rural in cTB
-        HLs = (S_RH+S_UH)/(S_RL+S_UL), # Relative high/low SES in scTB
-        HLc = (C_RH+C_UH)/(C_RL+C_UL), # Relative high/low SES in cTB
+        Pop   = (N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+O_RL+O_RH+O_UL+O_UH+M_RL+M_RH+M_UL+M_UH+dRM_RL+dRM_RH+dRM_UL+dRM_UH+S_RL+S_RH+S_UL+S_UH+RS_RL+RS_RH+RS_UL+RS_UH+C_RL+C_RH+C_UL+C_UH+RC_RL+RC_RH+RC_UL+RC_UH+P_RL+P_RH+P_UL+P_UH), # Total population
+        PRL   = (N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL), # Population Rural - Low SES
+        PRH   = (N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH), # Population Rural - High SES
+        PUL   = (N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL), # Population Urban - Low SES
+        PUH   = (N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH), # Population Urban - High SES
+        Sub   = (S_RL+S_RH+S_UL+S_UH), # Subclinical TB (per 100k)
+        SubRL = (S_RL/(N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL)*1e5),
+        SubRH = (S_RH/(N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH)*1e5),
+        SubUL = (S_UL/(N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL)*1e5),
+        SubUH = (S_UH/(N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH)*1e5),
+        Cln   = (C_RL+C_RH+C_UL+C_UH), # Clinical TB (per 100k)
+        ClnRL = (C_RL/(N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL)*1e5),
+        ClnRH = (C_RH/(N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH)*1e5),
+        ClnUL = (C_UL/(N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL)*1e5),
+        ClnUH = (C_UH/(N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH)*1e5),
+        TBc   = (S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # All TB (per 100k)
+        TBcRL = ((S_RL+C_RL)/(N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL)*1e5),
+        TBcRH = ((S_RH+C_RH)/(N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH)*1e5),
+        TBcUL = ((S_UL+C_UL)/(N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL)*1e5),
+        TBcUH = ((S_UH+C_UH)/(N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH)*1e5),
+        Mor   = (force_func_omega(time)*(C_RL+C_RH+C_UL+C_UH)), # Clinical TB mortality per time (per 100k)
+        Dxs   = (force_func_iota(time)*(C_RL+C_RH+C_UL+C_UH)), # Notifications cTB per time in adults (per 100k)
+        Spr   = (S_RL+S_RH+S_UL+S_UH)/(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion scTB
+        URs   = (S_UL+S_UH)/(S_RL+S_RH), # Relative urban/rural in scTB
+        URc   = (C_UL+C_UH)/(C_RL+C_RH), # Relative urban/rural in cTB
+        HLs   = (S_RH+S_UH)/(S_RL+S_UL), # Relative high/low SES in scTB
+        HLc   = (C_RH+C_UH)/(C_RL+C_UL), # Relative high/low SES in cTB
         ARIsi = ((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_RL+N_RH+N_UL+N_UH), # ARI: Susceptible -> Infected (%) 
         ARIoi = ((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(O_RL+O_RH+O_UL+O_UH)*theta_cleinf, # ARI: Cleared -> Infected (%) 
         ARIpi = ((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(P_RL+P_RH+P_UL+P_UH)*theta_recinf, # ARI: Recovered -> Infected (%) 
@@ -196,7 +212,7 @@ hmer_res <- function(params, times, outputs) {
 
 # 3.2 Fitting targets
 # unc <- 0.1 # 10% uncertainty
-
+# 
 # targets <- list(
 #   TBc2008 = list(val = 199, sigma = unc*199),   # TB prevalence rate 1st survey in adults (Nguyen et al. Emerg Infect Dis 2021)
 #   TBc2018 = list(val = 125, sigma = unc*125),   # TB prevalence rate 2nd survey in adults (Nguyen et al. Emerg Infect Dis 2021)
@@ -206,7 +222,7 @@ hmer_res <- function(params, times, outputs) {
 #   Dxs2020 = list(val = 56.2, sigma = unc*56.2), # Notifications 2020 in total population (WHO + UN WPP)
 #   Spr2008 = list(val = 0.70, sigma = unc*0.70), # Proportion scTB 2008 in adults (Emery et al. medRxiv 2022)
 #   Spr2018 = list(val = 0.66, sigma = unc*0.66)) # Proportion scTB 2018 in adults (Emery et al. medRxiv 2022)
-
+# 
 # targetsdb <- as.data.frame(t(as.data.frame(targets))) # Create dataframe with fitting targets
 # targetsdb$var <- substr(rownames(targetsdb),1,3) # Create variable classification
 # targetsdb$time <- as.numeric(substr(rownames(targetsdb),4,7)) # Create time variable
@@ -217,12 +233,12 @@ hmer_res <- function(params, times, outputs) {
 # rownames(targetsdb) <- gsub(rownames(targetsdb),pattern = "\\.val", replacement = "")
 
 targets <- list(
-  TBc2008 = c(160,248),
-  TBc2018 = c(98,159),
-  Mor2000 = c(20,35),
-  Mor2010 = c(15,25),
-  Dxs2010 = c(40,60),
-  Dxs2020 = c(30,50),
+  TBc2008 = c(159.2,238.8),
+  TBc2018 = c(100.0,150.0),
+  Mor2000 = c(32.4,48.6),
+  Mor2010 = c(20.2,30.2),
+  Dxs2010 = c(47.8,71.6),
+  Dxs2020 = c(44.9,67.4),
   Spr2008 = c(0.56,0.84),
   Spr2018 = c(0.53,0.79))
 
@@ -379,7 +395,7 @@ export(non_imp_pts[[1]],here("outputs","pts_w1.Rdata")) # Save data frame
 beepr::beep(2)
 
 # 3.5 HMER loop runs
-w <- 2 # Update wave run
+w <- 4 # Update wave run
 
 pb <- progress_bar$new(format = "[:bar] :percent :eta", total = nrow(non_imp_pts[[w-1]]))
 tmp <- list()
