@@ -61,46 +61,101 @@ parms_ACFA <- data.frame(
   parameter = c("iota_min", "phi_min"), 
   med = c(0.1, 0.05))
 
-acf_year <- c(2025, 2027) 
+acf_year <- c(2025, 2027, 2035) 
 
 parms_ACFA <- parms_set(parms_baseline, parms_ACFA, acf_year, end_time = 2050)
 parms_ACFA <- as.data.frame(do.call(rbind, parms_ACFA)) %>% 
   rownames_to_column(var = "year") %>%
   mutate(year = str_extract(year, "^\\d+"))
 
-parms <- parms_base
-times <- 2020
-
 mu <- approxfun(WPP$year, WPP$mortrate, method = 'linear', rule = 2)
 nu <- approxfun(WPP$year, WPP$birthrate, method = 'linear', rule = 2)
 chi <- approxfun(WPP$year, WPP$pop, method = 'linear', rule = 2)
 
-chi(times)
-
 # 3. Models ==========
-ode <- function(times, state, parms) {
+ode <- function(parms, end_time = 2050) {
   
-  # Parameters
-  beta <- parms[parms$parameter == 'beta' & parms$year == floor(times), 'med']
-  kappa <- parms[parms$parameter == 'kappa' & parms$year == floor(times), 'med']
-  gamma_infcle <- parms[parms$parameter == 'gamma_infcle' & parms$year == floor(times), 'med']
-  lambda_infmin <- parms[parms$parameter == 'lambda_infmin' & parms$year == floor(times), 'med']
-  gamma_mincle <- parms[parms$parameter == 'gamma_mincle' & parms$year == floor(times), 'med']
-  theta_cleinf <- parms[parms$parameter == 'theta_cleinf' & parms$year == floor(times), 'med']
-  iota_min <- parms[parms$parameter == 'iota_min' & parms$year == floor(times), 'med']
-  phi_min <- parms[parms$parameter == 'phi_min', 'med']
-  lambda_minsub <- parms[parms$parameter == 'lambda_minsub' & parms$year == floor(times), 'med']
-  lambda_infsub <- parms[parms$parameter == 'lambda_infsub' & parms$year == floor(times), 'med']
-  gamma_submin <- parms[parms$parameter == 'gamma_submin' & parms$year == floor(times), 'med']
-  iota_sub <- parms[parms$parameter == 'iota_sub' & parms$year == floor(times), 'med']
-  phi_sub <- parms[parms$parameter == 'phi_sub' & parms$year == floor(times), 'med']
-  lambda_subcln <- parms[parms$parameter == 'lambda_subcln' & parms$year == floor(times), 'med']
-  gamma_clnsub <- parms[parms$parameter == 'gamma_clnsub' & parms$year == floor(times), 'med']
-  omega <- parms[parms$parameter == 'omega' & parms$year == floor(times), 'med']
-  iota_cln <- parms[parms$parameter == 'iota_cln' & parms$year == floor(times), 'med']
-  phi_cln <- parms[parms$parameter == 'phi_cln' & parms$year == floor(times), 'med']
-  tau_min <- parms[parms$parameter == 'tau_min' & parms$year == floor(times), 'med']
-  tau_sub <- parms[parms$parameter == 'tau_sub' & parms$year == floor(times), 'med']
+  # Parameter functions
+  beta <- function(times){
+    beta <- parms[parms$parameter == 'beta' & parms$year == floor(times), 'med']
+    return(beta)
+  }
+  kappa <- function(times){
+    kappa <- parms[parms$parameter == 'kappa' & parms$year == floor(times), 'med']
+    return(kappa)
+  }
+  gamma_infcle <- function(times){
+    gamma_infcle <- parms[parms$parameter == 'gamma_infcle' & parms$year == floor(times), 'med']
+    return(gamma_infcle)
+  }
+  lambda_infmin <- function(times){
+    lambda_infmin <- parms[parms$parameter == 'lambda_infmin' & parms$year == floor(times), 'med']
+    return(lambda_infmin)
+  }
+  gamma_mincle <- function(times){
+    gamma_mincle <- parms[parms$parameter == 'gamma_mincle' & parms$year == floor(times), 'med']
+    return(gamma_mincle)
+  }
+  theta_cleinf <- function(times){
+    theta_cleinf <- parms[parms$parameter == 'theta_cleinf' & parms$year == floor(times), 'med']
+    return(theta_cleinf)
+  }
+  iota_min <- function(times){
+    iota_min <- parms[parms$parameter == 'iota_min' & parms$year == floor(times), 'med']
+    return(iota_min)
+  }
+  phi_min <- function(times){
+    phi_min <- parms[parms$parameter == 'phi_min' & parms$year == floor(times), 'med']
+    return(phi_min)
+  }
+  lambda_minsub <- function(times){
+    lambda_minsub <- parms[parms$parameter == 'lambda_minsub' & parms$year == floor(times), 'med']
+    return(lambda_minsub)
+  }
+  lambda_infsub <- function(times){
+    lambda_infsub <- parms[parms$parameter == 'lambda_infsub' & parms$year == floor(times), 'med']
+    return(lambda_infsub)
+  }
+  gamma_submin <- function(times){
+    gamma_submin <- parms[parms$parameter == 'gamma_submin' & parms$year == floor(times), 'med']
+    return(gamma_submin)
+  }
+  iota_sub <- function(times){
+    iota_sub <- parms[parms$parameter == 'iota_sub' & parms$year == floor(times), 'med']
+    return(iota_sub)
+  }
+  phi_sub <- function(times){
+    phi_sub <- parms[parms$parameter == 'phi_sub' & parms$year == floor(times), 'med']
+    return(phi_sub)
+  }
+  lambda_subcln <- function(times){
+    lambda_subcln <- parms[parms$parameter == 'lambda_subcln' & parms$year == floor(times), 'med']
+    return(lambda_subcln)
+  }
+  gamma_clnsub <- function(times){
+    gamma_clnsub <- parms[parms$parameter == 'gamma_clnsub' & parms$year == floor(times), 'med']
+    return(gamma_clnsub)
+  }
+  omega <- function(times){
+    omega <- parms[parms$parameter == 'omega' & parms$year == floor(times), 'med']
+    return(omega)
+  }
+  iota_cln <- function(times){
+    iota_cln <- parms[parms$parameter == 'iota_cln' & parms$year == floor(times), 'med']
+    return(iota_cln)
+  }
+  phi_cln <- function(times){
+    phi_cln <- parms[parms$parameter == 'phi_cln' & parms$year == floor(times), 'med']
+    return(phi_cln)
+  }
+  tau_min <- function(times){
+    tau_min <- parms[parms$parameter == 'tau_min' & parms$year == floor(times), 'med']
+    return(tau_min)
+  }
+  tau_sub <- function(times){
+    tau_sub <- parms[parms$parameter == 'tau_sub' & parms$year == floor(times), 'med']
+    return(tau_sub)
+  }
   
   # Static parameters  
   delta <- 1      # Treatment year
@@ -111,96 +166,110 @@ ode <- function(times, state, parms) {
   nu <- approxfun(WPP$year, WPP$birthrate, method = 'linear', rule = 2)
   chi <- approxfun(WPP$year, WPP$pop, method = 'linear', rule = 2)
   
-  with(as.list(c(times, state, parms)), {
-    
-    dN_RL  = nu(times)*(N_RL+I_RL+O_RL+M_RL+RM_RL+S_RL+RS_RL+C_RL+RC_RL+P_RL) - ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*N_RL - mu(times)*N_RL
-    dI_RL  = ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_RL+(O_RL*theta_cleinf)+(P_RL*theta_recinf)) - gamma_infcle*I_RL - lambda_infmin*I_RL - lambda_infsub*I_RL - mu(times)*I_RL
-    dO_RL  = gamma_infcle*I_RL + gamma_mincle*M_RL - ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_RL*theta_cleinf - mu(times)*O_RL
-    dM_RL  = lambda_infmin*I_RL + gamma_submin*S_RL - gamma_mincle*M_RL - lambda_minsub*M_RL - iota_min*M_RL + phi_min*RM_RL + tau_min*P_RL - mu(times)*M_RL
-    dRM_RL = iota_min*M_RL - phi_min*RM_RL - delta*RM_RL - mu(times)*RM_RL
-    dS_RL  = lambda_infsub*I_RL + lambda_minsub*M_RL + gamma_clnsub*C_RL - gamma_submin*S_RL - lambda_subcln*S_RL - iota_sub*S_RL + phi_sub*RS_RL + tau_sub*P_RL - mu(times)*S_RL
-    dRS_RL = iota_sub*S_RL - phi_sub*RS_RL - delta*RS_RL - mu(times)*RS_RL
-    dC_RL  = lambda_subcln*S_RL - gamma_clnsub*C_RL - omega*C_RL - mu(times)*C_RL - iota_cln*C_RL + phi_cln*RC_RL
-    dRC_RL = iota_cln*C_RL - phi_cln*RC_RL - delta*RC_RL - mu(times)*RC_RL
-    dP_RL  = delta*(RM_RL+RS_RL+RC_RL) - tau_min*P_RL - tau_sub*P_RL - ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*P_RL*theta_recinf - mu(times)*P_RL
-    
-    dN_RH  = nu(times)*(N_RH+I_RH+O_RH+M_RH+RM_RH+S_RH+RS_RH+C_RH+RC_RH+P_RH) - ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*N_RH - mu(times)*N_RH
-    dI_RH  = ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_RH+(O_RH*theta_cleinf)+(P_RH*theta_recinf)) - gamma_infcle*I_RH - lambda_infmin*I_RH - lambda_infsub*I_RH - mu(times)*I_RH
-    dO_RH  = gamma_infcle*I_RH + gamma_mincle*M_RH - ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_RH*theta_cleinf - mu(times)*O_RH
-    dM_RH  = lambda_infmin*I_RH + gamma_submin*S_RH - gamma_mincle*M_RH - lambda_minsub*M_RH - iota_min*M_RH + phi_min*RM_RH + tau_min*P_RH - mu(times)*M_RH
-    dRM_RH = iota_min*M_RH - phi_min*RM_RH - delta*RM_RH - mu(times)*RM_RH
-    dS_RH  = lambda_infsub*I_RH + lambda_minsub*M_RH + gamma_clnsub*C_RH - gamma_submin*S_RH - lambda_subcln*S_RH - iota_sub*S_RH + phi_sub*RS_RH + tau_sub*P_RH - mu(times)*S_RH
-    dRS_RH = iota_sub*S_RH - phi_sub*RS_RH - delta*RS_RH - mu(times)*RS_RH
-    dC_RH  = lambda_subcln*S_RH - gamma_clnsub*C_RH - omega*C_RH - mu(times)*C_RH - iota_cln*C_RH + phi_cln*RC_RH
-    dRC_RH = iota_cln*C_RH - phi_cln*RC_RH - delta*RC_RH - mu(times)*RC_RH
-    dP_RH  = delta*(RM_RH+RS_RH+RC_RH) - tau_min*P_RH - tau_sub*P_RH - ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*P_RH*theta_recinf - mu(times)*P_RH
-    
-    dN_UL  = nu(times)*(N_UL+I_UL+O_UL+M_UL+RM_UL+S_UL+RS_UL+C_UL+RC_UL+P_UL) - ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*N_UL - mu(times)*N_UL
-    dI_UL  = ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_UL+(O_UL*theta_cleinf)+(P_UL*theta_recinf)) - gamma_infcle*I_UL - lambda_infmin*I_UL - lambda_infsub*I_UL - mu(times)*I_UL
-    dO_UL  = gamma_infcle*I_UL + gamma_mincle*M_UL - ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_UL*theta_cleinf - mu(times)*O_UL
-    dM_UL  = lambda_infmin*I_UL + gamma_submin*S_UL - gamma_mincle*M_UL - lambda_minsub*M_UL - iota_min*M_UL + phi_min*RM_UL + tau_min*P_UL - mu(times)*M_UL
-    dRM_UL = iota_min*M_UL - phi_min*RM_UL - delta*RM_UL - mu(times)*RM_UL
-    dS_UL  = lambda_infsub*I_UL + lambda_minsub*M_UL + gamma_clnsub*C_UL - gamma_submin*S_UL - lambda_subcln*S_UL - iota_sub*S_UL + phi_sub*RS_UL + tau_sub*P_UL - mu(times)*S_UL
-    dRS_UL = iota_sub*S_UL - phi_sub*RS_UL - delta*RS_UL - mu(times)*RS_UL
-    dC_UL  = lambda_subcln*S_UL - gamma_clnsub*C_UL - omega*C_UL - mu(times)*C_UL - iota_cln*C_UL + phi_cln*RC_UL
-    dRC_UL = iota_cln*C_UL - phi_cln*RC_UL - delta*RC_UL - mu(times)*RC_UL
-    dP_UL  = delta*(RM_UL+RS_UL+RC_UL) - tau_min*P_UL - tau_sub*P_UL - ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*P_UL*theta_recinf - mu(times)*P_UL
-    
-    dN_UH  = nu(times)*(N_UH+I_UH+O_UH+M_UH+RM_UH+S_UH+RS_UH+C_UH+RC_UH+P_UH) - ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*N_UH - mu(times)*N_UH
-    dI_UH  = ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_UH+(O_UH*theta_cleinf)+(P_UH*theta_recinf)) - gamma_infcle*I_UH - lambda_infmin*I_UH - lambda_infsub*I_UH - mu(times)*I_UH
-    dO_UH  = gamma_infcle*I_UH + gamma_mincle*M_UH - ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_UH*theta_cleinf - mu(times)*O_UH
-    dM_UH  = lambda_infmin*I_UH + gamma_submin*S_UH - gamma_mincle*M_UH - lambda_minsub*M_UH - iota_min*M_UH + phi_min*RM_UH + tau_min*P_UH - mu(times)*M_UH
-    dRM_UH = iota_min*M_UH - phi_min*RM_UH - delta*RM_UH - mu(times)*RM_UH
-    dS_UH  = lambda_infsub*I_UH + lambda_minsub*M_UH + gamma_clnsub*C_UH - gamma_submin*S_UH - lambda_subcln*S_UH - iota_sub*S_UH + phi_sub*RS_UH + tau_sub*P_UH - mu(times)*S_UH
-    dRS_UH = iota_sub*S_UH - phi_sub*RS_UH - delta*RS_UH - mu(times)*RS_UH
-    dC_UH  = lambda_subcln*S_UH - gamma_clnsub*C_UH - omega*C_UH - mu(times)*C_UH - iota_cln*C_UH + phi_cln*RC_UH
-    dRC_UH = iota_cln*C_UH - phi_cln*RC_UH - delta*RC_UH - mu(times)*RC_UH
-    dP_UH  = delta*(RM_UH+RS_UH+RC_UH) - tau_min*P_UH - tau_sub*P_UH - ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*P_UH*theta_recinf - mu(times)*P_UH
-    
-    return(list(c(
-      dN_RL, dN_RH, dN_UL, dN_UH, dI_RL, dI_RH, dI_UL, dI_UH, dO_RL, dO_RH, dO_UL, dO_UH, dM_RL, dM_RH, dM_UL, dM_UH, dRM_RL, dRM_RH, dRM_UL, dRM_UH,
-      dS_RL, dS_RH, dS_UL, dS_UH, dRS_RL, dRS_RH, dRS_UL, dRS_UH, dC_RL, dC_RH, dC_UL, dC_UH, dRC_RL, dRC_RH, dRC_UL, dRC_UH, dP_RL, dP_RH, dP_UL, dP_UH),
-      Pop = (N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+O_RL+O_RH+O_UL+O_UH+M_RL+M_RH+M_UL+M_UH+dRM_RL+dRM_RH+dRM_UL+dRM_UH+S_RL+S_RH+S_UL+S_UH+RS_RL+RS_RH+RS_UL+RS_UH+C_RL+C_RH+C_UL+C_UH+RC_RL+RC_RH+RC_UL+RC_UH+P_RL+P_RH+P_UL+P_UH), # Total population
-      Sub = (S_RL+S_RH+S_UL+S_UH)/chi(times)*100000, # Subclinical TB (per 100k)
-      Cln = (C_RL+C_RH+C_UL+C_UH)/chi(times)*100000, # Clinical TB (per 100k)
-      TBc = (S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH)/chi(times)*100000, # All TB (per 100k)
-      Mor = (omega*(C_RL+C_RH+C_UL+C_UH))/chi(times)*100000, # Clinical TB mortality per time (per 100k)
-      Dxs = (iota_cln*(C_RL+C_RH+C_UL+C_UH))/chi(times)*100000, # Notifications cTB per time in adults (per 100k)
-      Spr = (S_RL+S_RH+S_UL+S_UH)/(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion scTB
-      URs = (S_UL+S_UH)/(S_RL+S_RH), # Relative urban/rural in scTB
-      URc = (C_UL+C_UH)/(C_RL+C_RH), # Relative urban/rural in cTB
-      HLs = (S_RH+S_UH)/(S_RL+S_UL), # Relative high/low SES in scTB
-      HLc = (C_RH+C_UH)/(C_RL+C_UL), # Relative high/low SES in cTB
-      ARIsi = ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_RL+N_RH+N_UL+N_UH), # ARI: Susceptible -> Infected (%) 
-      ARIoi = ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(O_RL+O_RH+O_UL+O_UH)*theta_cleinf, # ARI: Cleared -> Infected (%) 
-      ARIpi = ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(P_RL+P_RH+P_UL+P_UH)*theta_recinf, # ARI: Recovered -> Infected (%) 
-      ARI = ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))) # ARI
-    )
-  })
-}
+  des <- function(times, state, parms) {
+    with(as.list(c(times, state, parms)), {
+      
+      dN_RL  = nu(times)*(N_RL+I_RL+O_RL+M_RL+RM_RL+S_RL+RS_RL+C_RL+RC_RL+P_RL) - ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*N_RL - mu(times)*N_RL
+      dI_RL  = ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_RL+(O_RL*theta_cleinf(times))+(P_RL*theta_recinf)) - gamma_infcle(times)*I_RL - lambda_infmin(times)*I_RL - lambda_infsub(times)*I_RL - mu(times)*I_RL
+      dO_RL  = gamma_infcle(times)*I_RL + gamma_mincle(times)*M_RL - ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_RL*theta_cleinf(times) - mu(times)*O_RL
+      dM_RL  = lambda_infmin(times)*I_RL + gamma_submin(times)*S_RL - gamma_mincle(times)*M_RL - lambda_minsub(times)*M_RL - iota_min(times)*M_RL + phi_min(times)*RM_RL + tau_min(times)*P_RL - mu(times)*M_RL
+      dRM_RL = iota_min(times)*M_RL - phi_min(times)*RM_RL - delta*RM_RL - mu(times)*RM_RL
+      dS_RL  = lambda_infsub(times)*I_RL + lambda_minsub(times)*M_RL + gamma_clnsub(times)*C_RL - gamma_submin(times)*S_RL - lambda_subcln(times)*S_RL - iota_sub(times)*S_RL + phi_sub(times)*RS_RL + tau_sub(times)*P_RL - mu(times)*S_RL
+      dRS_RL = iota_sub(times)*S_RL - phi_sub(times)*RS_RL - delta*RS_RL - mu(times)*RS_RL
+      dC_RL  = lambda_subcln(times)*S_RL - gamma_clnsub(times)*C_RL - omega(times)*C_RL - mu(times)*C_RL - iota_cln(times)*C_RL + phi_cln(times)*RC_RL
+      dRC_RL = iota_cln(times)*C_RL - phi_cln(times)*RC_RL - delta*RC_RL - mu(times)*RC_RL
+      dP_RL  = delta*(RM_RL+RS_RL+RC_RL) - tau_min(times)*P_RL - tau_sub(times)*P_RL - ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*P_RL*theta_recinf - mu(times)*P_RL
+      
+      dN_RH  = nu(times)*(N_RH+I_RH+O_RH+M_RH+RM_RH+S_RH+RS_RH+C_RH+RC_RH+P_RH) - ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*N_RH - mu(times)*N_RH
+      dI_RH  = ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_RH+(O_RH*theta_cleinf(times))+(P_RH*theta_recinf)) - gamma_infcle(times)*I_RH - lambda_infmin(times)*I_RH - lambda_infsub(times)*I_RH - mu(times)*I_RH
+      dO_RH  = gamma_infcle(times)*I_RH + gamma_mincle(times)*M_RH - ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_RH*theta_cleinf(times) - mu(times)*O_RH
+      dM_RH  = lambda_infmin(times)*I_RH + gamma_submin(times)*S_RH - gamma_mincle(times)*M_RH - lambda_minsub(times)*M_RH - iota_min(times)*M_RH + phi_min(times)*RM_RH + tau_min(times)*P_RH - mu(times)*M_RH
+      dRM_RH = iota_min(times)*M_RH - phi_min(times)*RM_RH - delta*RM_RH - mu(times)*RM_RH
+      dS_RH  = lambda_infsub(times)*I_RH + lambda_minsub(times)*M_RH + gamma_clnsub(times)*C_RH - gamma_submin(times)*S_RH - lambda_subcln(times)*S_RH - iota_sub(times)*S_RH + phi_sub(times)*RS_RH + tau_sub(times)*P_RH - mu(times)*S_RH
+      dRS_RH = iota_sub(times)*S_RH - phi_sub(times)*RS_RH - delta*RS_RH - mu(times)*RS_RH
+      dC_RH  = lambda_subcln(times)*S_RH - gamma_clnsub(times)*C_RH - omega(times)*C_RH - mu(times)*C_RH - iota_cln(times)*C_RH + phi_cln(times)*RC_RH
+      dRC_RH = iota_cln(times)*C_RH - phi_cln(times)*RC_RH - delta*RC_RH - mu(times)*RC_RH
+      dP_RH  = delta*(RM_RH+RS_RH+RC_RH) - tau_min(times)*P_RH - tau_sub(times)*P_RH - ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*P_RH*theta_recinf - mu(times)*P_RH
+      
+      dN_UL  = nu(times)*(N_UL+I_UL+O_UL+M_UL+RM_UL+S_UL+RS_UL+C_UL+RC_UL+P_UL) - ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*N_UL - mu(times)*N_UL
+      dI_UL  = ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_UL+(O_UL*theta_cleinf(times))+(P_UL*theta_recinf)) - gamma_infcle(times)*I_UL - lambda_infmin(times)*I_UL - lambda_infsub(times)*I_UL - mu(times)*I_UL
+      dO_UL  = gamma_infcle(times)*I_UL + gamma_mincle(times)*M_UL - ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_UL*theta_cleinf(times) - mu(times)*O_UL
+      dM_UL  = lambda_infmin(times)*I_UL + gamma_submin(times)*S_UL - gamma_mincle(times)*M_UL - lambda_minsub(times)*M_UL - iota_min(times)*M_UL + phi_min(times)*RM_UL + tau_min(times)*P_UL - mu(times)*M_UL
+      dRM_UL = iota_min(times)*M_UL - phi_min(times)*RM_UL - delta*RM_UL - mu(times)*RM_UL
+      dS_UL  = lambda_infsub(times)*I_UL + lambda_minsub(times)*M_UL + gamma_clnsub(times)*C_UL - gamma_submin(times)*S_UL - lambda_subcln(times)*S_UL - iota_sub(times)*S_UL + phi_sub(times)*RS_UL + tau_sub(times)*P_UL - mu(times)*S_UL
+      dRS_UL = iota_sub(times)*S_UL - phi_sub(times)*RS_UL - delta*RS_UL - mu(times)*RS_UL
+      dC_UL  = lambda_subcln(times)*S_UL - gamma_clnsub(times)*C_UL - omega(times)*C_UL - mu(times)*C_UL - iota_cln(times)*C_UL + phi_cln(times)*RC_UL
+      dRC_UL = iota_cln(times)*C_UL - phi_cln(times)*RC_UL - delta*RC_UL - mu(times)*RC_UL
+      dP_UL  = delta*(RM_UL+RS_UL+RC_UL) - tau_min(times)*P_UL - tau_sub(times)*P_UL - ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*P_UL*theta_recinf - mu(times)*P_UL
+      
+      dN_UH  = nu(times)*(N_UH+I_UH+O_UH+M_UH+RM_UH+S_UH+RS_UH+C_UH+RC_UH+P_UH) - ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*N_UH - mu(times)*N_UH
+      dI_UH  = ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_UH+(O_UH*theta_cleinf(times))+(P_UH*theta_recinf)) - gamma_infcle(times)*I_UH - lambda_infmin(times)*I_UH - lambda_infsub(times)*I_UH - mu(times)*I_UH
+      dO_UH  = gamma_infcle(times)*I_UH + gamma_mincle(times)*M_UH - ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_UH*theta_cleinf(times) - mu(times)*O_UH
+      dM_UH  = lambda_infmin(times)*I_UH + gamma_submin(times)*S_UH - gamma_mincle(times)*M_UH - lambda_minsub(times)*M_UH - iota_min(times)*M_UH + phi_min(times)*RM_UH + tau_min(times)*P_UH - mu(times)*M_UH
+      dRM_UH = iota_min(times)*M_UH - phi_min(times)*RM_UH - delta*RM_UH - mu(times)*RM_UH
+      dS_UH  = lambda_infsub(times)*I_UH + lambda_minsub(times)*M_UH + gamma_clnsub(times)*C_UH - gamma_submin(times)*S_UH - lambda_subcln(times)*S_UH - iota_sub(times)*S_UH + phi_sub(times)*RS_UH + tau_sub(times)*P_UH - mu(times)*S_UH
+      dRS_UH = iota_sub(times)*S_UH - phi_sub(times)*RS_UH - delta*RS_UH - mu(times)*RS_UH
+      dC_UH  = lambda_subcln(times)*S_UH - gamma_clnsub(times)*C_UH - omega(times)*C_UH - mu(times)*C_UH - iota_cln(times)*C_UH + phi_cln(times)*RC_UH
+      dRC_UH = iota_cln(times)*C_UH - phi_cln(times)*RC_UH - delta*RC_UH - mu(times)*RC_UH
+      dP_UH  = delta*(RM_UH+RS_UH+RC_UH) - tau_min(times)*P_UH - tau_sub(times)*P_UH - ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*P_UH*theta_recinf - mu(times)*P_UH
+      
+      return(list(c(
+        dN_RL, dN_RH, dN_UL, dN_UH, dI_RL, dI_RH, dI_UL, dI_UH, dO_RL, dO_RH, dO_UL, dO_UH, dM_RL, dM_RH, dM_UL, dM_UH, dRM_RL, dRM_RH, dRM_UL, dRM_UH,
+        dS_RL, dS_RH, dS_UL, dS_UH, dRS_RL, dRS_RH, dRS_UL, dRS_UH, dC_RL, dC_RH, dC_UL, dC_UH, dRC_RL, dRC_RH, dRC_UL, dRC_UH, dP_RL, dP_RH, dP_UL, dP_UH),
+        Pop = (N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+O_RL+O_RH+O_UL+O_UH+M_RL+M_RH+M_UL+M_UH+dRM_RL+dRM_RH+dRM_UL+dRM_UH+S_RL+S_RH+S_UL+S_UH+RS_RL+RS_RH+RS_UL+RS_UH+C_RL+C_RH+C_UL+C_UH+RC_RL+RC_RH+RC_UL+RC_UH+P_RL+P_RH+P_UL+P_UH), # Total population
+        Sub = (S_RL+S_RH+S_UL+S_UH)/chi(times)*100000, # Subclinical TB (per 100k)
+        Cln = (C_RL+C_RH+C_UL+C_UH)/chi(times)*100000, # Clinical TB (per 100k)
+        TBc = (S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH)/chi(times)*100000, # All TB (per 100k)
+        Mor = (omega(times)*(C_RL+C_RH+C_UL+C_UH))/chi(times)*100000, # Clinical TB mortality per time (per 100k)
+        Dxs = (iota_cln(times)*(C_RL+C_RH+C_UL+C_UH))/chi(times)*100000, # Notifications cTB per time in adults (per 100k)
+        Spr = (S_RL+S_RH+S_UL+S_UH)/(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion scTB
+        URs = (S_UL+S_UH)/(S_RL+S_RH), # Relative urban/rural in scTB
+        URc = (C_UL+C_UH)/(C_RL+C_RH), # Relative urban/rural in cTB
+        HLs = (S_RH+S_UH)/(S_RL+S_UL), # Relative high/low SES in scTB
+        HLc = (C_RH+C_UH)/(C_RL+C_UL), # Relative high/low SES in cTB
+        ARIsi = ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_RL+N_RH+N_UL+N_UH), # ARI: Susceptible -> Infected (%) 
+        ARIoi = ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(O_RL+O_RH+O_UL+O_UH)*theta_cleinf(times), # ARI: Cleared -> Infected (%) 
+        ARIpi = ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(P_RL+P_RH+P_UL+P_UH)*theta_recinf, # ARI: Recovered -> Infected (%) 
+        ARI = ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH))))) # ARI
+    })
+  }
+  
+  yini <- c(N_RL = bWPP[, "N_RL"], N_RH = bWPP[, "N_RH"], N_UL = bWPP[, "N_UL"], N_UH = bWPP[, "N_UH"], 
+            I_RL = bWPP[, "I_RL"], I_RH = bWPP[, "I_RH"], I_UL = bWPP[, "I_UL"], I_UH = bWPP[, "I_UH"], 
+            O_RL = bWPP[, "O_RL"], O_RH = bWPP[, "O_RH"], O_UL = bWPP[, "O_UL"], O_UH = bWPP[, "O_UH"],
+            M_RL = bWPP[, "M_RL"], M_RH = bWPP[, "M_RH"], M_UL = bWPP[, "M_UL"], M_UH = bWPP[, "M_UH"], 
+            RM_RL = bWPP[, "RM_RL"], RM_RH = bWPP[, "RM_RH"], RM_UL = bWPP[, "RM_UL"], RM_UH = bWPP[, "RM_UH"],
+            S_RL = bWPP[, "S_RL"], S_RH = bWPP[, "S_RH"], S_UL = bWPP[, "S_UL"], S_UH = bWPP[, "S_UH"], 
+            RS_RL = bWPP[, "RS_RL"], RS_RH = bWPP[, "RS_RH"], RS_UL = bWPP[, "RS_UL"], RS_UH = bWPP[, "RS_UH"],
+            C_RL = bWPP[, "C_RL"], C_RH = bWPP[, "C_RH"], C_UL = bWPP[, "C_UL"], C_UH = bWPP[, "C_UH"], 
+            RC_RL = bWPP[, "RC_RL"], RC_RH = bWPP[, "RC_RH"], RC_UL = bWPP[, "RC_UL"], RC_UH = bWPP[, "RC_UH"],
+            P_RL = bWPP[, "P_RL"], P_RH = bWPP[, "P_RH"], P_UL = bWPP[, "P_UL"], P_UH = bWPP[, "P_UH"]) 
+  
+  times <- seq(2020, end_time, by = 1)
+  out <- deSolve::ode(yini, times, des, parms)
+  return(out)
+}  
 
 # 4. Outputs ==========
+outbase <- as.data.frame(ode(parms_base)) %>% 
+  mutate(type = "base")
 
-end_time <- 2050
+outacfa <- as.data.frame(ode(parms_ACFA)) %>% 
+  mutate(type = "acfa")
 
-times <- seq(2020, end_time, by = 1)
+# 5. Data curation ==========
+outs <- rbind(outbase, outacfa) %>% 
+  pivot_longer(cols = -c(time, type), names_to = "var", values_to = "val")
 
-state <- c(N_RL = bWPP[, "N_RL"], N_RH = bWPP[, "N_RH"], N_UL = bWPP[, "N_UL"], N_UH = bWPP[, "N_UH"], 
-           I_RL = bWPP[, "I_RL"], I_RH = bWPP[, "I_RH"], I_UL = bWPP[, "I_UL"], I_UH = bWPP[, "I_UH"], 
-           O_RL = bWPP[, "O_RL"], O_RH = bWPP[, "O_RH"], O_UL = bWPP[, "O_UL"], O_UH = bWPP[, "O_UH"],
-           M_RL = bWPP[, "M_RL"], M_RH = bWPP[, "M_RH"], M_UL = bWPP[, "M_UL"], M_UH = bWPP[, "M_UH"], 
-           RM_RL = bWPP[, "RM_RL"], RM_RH = bWPP[, "RM_RH"], RM_UL = bWPP[, "RM_UL"], RM_UH = bWPP[, "RM_UH"],
-           S_RL = bWPP[, "S_RL"], S_RH = bWPP[, "S_RH"], S_UL = bWPP[, "S_UL"], S_UH = bWPP[, "S_UH"], 
-           RS_RL = bWPP[, "RS_RL"], RS_RH = bWPP[, "RS_RH"], RS_UL = bWPP[, "RS_UL"], RS_UH = bWPP[, "RS_UH"],
-           C_RL = bWPP[, "C_RL"], C_RH = bWPP[, "C_RH"], C_UL = bWPP[, "C_UL"], C_UH = bWPP[, "C_UH"], 
-           RC_RL = bWPP[, "RC_RL"], RC_RH = bWPP[, "RC_RH"], RC_UL = bWPP[, "RC_UL"], RC_UH = bWPP[, "RC_UH"],
-           P_RL = bWPP[, "P_RL"], P_RH = bWPP[, "P_RH"], P_UL = bWPP[, "P_UL"], P_UH = bWPP[, "P_UH"]) 
+# 6. Plots ==========
 
-out <- deSolve::ode(state, times, ode, parms_base)
+prev_targets <- c(150, 100, 50, 25)
 
-# 5. Plots ==========
 ggplot() +
-  geom_line(data = base, aes(x = time, y = TBc), colour = "#CE2931") +
-  scale_y_continuous(limits = c(0,200)) +
+  geom_line(data = filter(outs, var == "TBc"), aes(x = time, y = val, colour = type)) +
+  scale_color_manual(values = c("#CE2931", "#2984ce"), name = "Scenarios") +
   labs(x = "Year", y = "TB prevalence rate (per 100K)") +
+  geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
+  geom_hline(yintercept = prev_targets, linetype = "solid", color = "gray") +
   theme_minimal()
+  
