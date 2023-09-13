@@ -16,6 +16,9 @@ library(gganimate) # Adds animation to plot
 results <- as.data.table(import(here("outputs","results.Rdata")))
 targets <- as.data.table(import(here("data","targets.Rdata")))
 
+res <- results %>% 
+  filter(time >= 2000)
+
 # 2. Plot ==========
 title_size = 13
 axis_title_size = 13

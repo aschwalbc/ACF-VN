@@ -18,7 +18,7 @@ library(progress) # Displays progress bar
 # 1. Parameters ==========
 # 1.1 Baseline parameters (for testing)
 parms = c(
-  beta = 8,            # Contact (per person/year) parameter
+  beta = 18,            # Contact (per person/year) parameter
   kappa = 0.5,          # Relative infectiousness
   gamma_infcle = 1.83,  # REG: Infected -> Cleared
   lambda_infmin = 0.10, # PROG: Infected -> Minimal
@@ -472,7 +472,7 @@ ggplot() +
 export(runcheck, here("outputs", "runcheck.Rdata")) # Save data frame
 export(targetcheck, here("outputs", "targetcheck.Rdata")) # Save data frame
 
-pts_fin <- non_imp_pts[[w]]
+pts_fin <- non_imp_pts[[w-1]]
 
 quants <- c(0.025,0.5,0.975) # Set quantiles
 parameters <- apply(pts_fin, 2, quantile, probs = quants, na.rm = TRUE) # Set parameter quantiles

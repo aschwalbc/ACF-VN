@@ -56,18 +56,43 @@ parms_base <- as.data.frame(do.call(rbind, parms_base)) %>%
   rownames_to_column(var = "year") %>%
   mutate(year = str_extract(year, "^\\d+"))
 
-# 2.4 ACF Scenario A
+# 2.4 ACF Scenario A - Xpert only, Xpert+ get treatment
 parms_ACFA <- data.frame(
-  parameter = c("iota_min", "phi_min"), 
-  med = c(0.1, 0.05))
+  parameter = c("iota_sub", "phi_sub"), 
+  med = c(0.80, 0.05))
 
-acf_year <- c(2025, 2027, 2035) 
+acfa_year <- c(2025, 2030) 
 
-parms_ACFA <- parms_set(parms_baseline, parms_ACFA, acf_year, end_time = 2050)
+parms_ACFA <- parms_set(parms_baseline, parms_ACFA, acfa_year, end_time = 2050)
 parms_ACFA <- as.data.frame(do.call(rbind, parms_ACFA)) %>% 
   rownames_to_column(var = "year") %>%
   mutate(year = str_extract(year, "^\\d+"))
 
+# 2.5 ACF Scenario B - CXR only, CXR+ get Xpert, Xpert+ get treatment
+parms_ACFB <- data.frame(
+  parameter = c("iota_sub", "phi_sub", "iota_min", "phi_min"), 
+  med = c(0.5, 0.05, 0.8, 0.05))
+
+acfb_year <- c(2025, 2030) 
+
+parms_ACFB <- parms_set(parms_baseline, parms_ACFB, acfb_year, end_time = 2050)
+parms_ACFB <- as.data.frame(do.call(rbind, parms_ACFB)) %>% 
+  rownames_to_column(var = "year") %>%
+  mutate(year = str_extract(year, "^\\d+"))
+
+# 2.6 ACF Scenario C - CXR and Xpert for all, Xpert+ get treatment
+parms_ACFC <- data.frame(
+  parameter = c("iota_sub", "phi_sub", "iota_min", "phi_min"), 
+  med = c(0.8, 0.05, 0.8, 0.05))
+
+acfc_year <- c(2025, 2030) 
+
+parms_ACFC <- parms_set(parms_baseline, parms_ACFC, acfb_year, end_time = 2050)
+parms_ACFC <- as.data.frame(do.call(rbind, parms_ACFC)) %>% 
+  rownames_to_column(var = "year") %>%
+  mutate(year = str_extract(year, "^\\d+"))
+
+# 2.7 Demographic parameters
 mu <- approxfun(WPP$year, WPP$mortrate, method = 'linear', rule = 2)
 nu <- approxfun(WPP$year, WPP$birthrate, method = 'linear', rule = 2)
 chi <- approxfun(WPP$year, WPP$pop, method = 'linear', rule = 2)
@@ -216,21 +241,56 @@ ode <- function(parms, end_time = 2050) {
       return(list(c(
         dN_RL, dN_RH, dN_UL, dN_UH, dI_RL, dI_RH, dI_UL, dI_UH, dO_RL, dO_RH, dO_UL, dO_UH, dM_RL, dM_RH, dM_UL, dM_UH, dRM_RL, dRM_RH, dRM_UL, dRM_UH,
         dS_RL, dS_RH, dS_UL, dS_UH, dRS_RL, dRS_RH, dRS_UL, dRS_UH, dC_RL, dC_RH, dC_UL, dC_UH, dRC_RL, dRC_RH, dRC_UL, dRC_UH, dP_RL, dP_RH, dP_UL, dP_UH),
-        Pop = (N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+O_RL+O_RH+O_UL+O_UH+M_RL+M_RH+M_UL+M_UH+dRM_RL+dRM_RH+dRM_UL+dRM_UH+S_RL+S_RH+S_UL+S_UH+RS_RL+RS_RH+RS_UL+RS_UH+C_RL+C_RH+C_UL+C_UH+RC_RL+RC_RH+RC_UL+RC_UH+P_RL+P_RH+P_UL+P_UH), # Total population
-        Sub = (S_RL+S_RH+S_UL+S_UH)/chi(times)*100000, # Subclinical TB (per 100k)
-        Cln = (C_RL+C_RH+C_UL+C_UH)/chi(times)*100000, # Clinical TB (per 100k)
-        TBc = (S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH)/chi(times)*100000, # All TB (per 100k)
-        Mor = (omega(times)*(C_RL+C_RH+C_UL+C_UH))/chi(times)*100000, # Clinical TB mortality per time (per 100k)
-        Dxs = (iota_cln(times)*(C_RL+C_RH+C_UL+C_UH))/chi(times)*100000, # Notifications cTB per time in adults (per 100k)
-        Spr = (S_RL+S_RH+S_UL+S_UH)/(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion scTB
-        URs = (S_UL+S_UH)/(S_RL+S_RH), # Relative urban/rural in scTB
-        URc = (C_UL+C_UH)/(C_RL+C_RH), # Relative urban/rural in cTB
-        HLs = (S_RH+S_UH)/(S_RL+S_UL), # Relative high/low SES in scTB
-        HLc = (C_RH+C_UH)/(C_RL+C_UL), # Relative high/low SES in cTB
+        Pop   = (N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+O_RL+O_RH+O_UL+O_UH+M_RL+M_RH+M_UL+M_UH+dRM_RL+dRM_RH+dRM_UL+dRM_UH+S_RL+S_RH+S_UL+S_UH+RS_RL+RS_RH+RS_UL+RS_UH+C_RL+C_RH+C_UL+C_UH+RC_RL+RC_RH+RC_UL+RC_UH+P_RL+P_RH+P_UL+P_UH), # Total population
+        PRur  = (N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL+N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH), # Population rural
+        PUrb  = (N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL+N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH), # Population urban
+        PHig  = (N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH+N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH), # Population high SES
+        PLow  = (N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL+N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL), # Population low SES
+        PRL   = (N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL), # Population Rural - Low SES
+        PRH   = (N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH), # Population Rural - High SES
+        PUL   = (N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL), # Population Urban - Low SES
+        PUH   = (N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH), # Population Urban - High SES
+        Sub   = ((S_RL+S_RH+S_UL+S_UH)/chi(times)*1e5), # Subclinical TB (per 100k)
+        SubLo = ((S_RL+S_UL)/(N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL+N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL)*1e5), # Subclinical TB in low SES (per 100k)
+        SubHi = ((S_RH+S_UH)/(N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH+N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH)*1e5), # Subclinical TB in high SES (per 100k)
+        SubUr = ((S_UH+S_UL)/(N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL+N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH)*1e5), # Subclinical TB in urban (per 100k)
+        SubRu = ((S_RH+S_RL)/(N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL+N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH)*1e5), # Subclinical TB in urban (per 100k)
+        SubRL = (S_RL/(N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL)*1e5), # Subclinical TB Rural - Low SES (per 100k)
+        SubRH = (S_RH/(N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH)*1e5), # Subclinical TB Rural - High SES (per 100k)
+        SubUL = (S_UL/(N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL)*1e5), # Subclinical TB Urban - Low SES (per 100k)
+        SubUH = (S_UH/(N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH)*1e5), # Subclinical TB Urban - High SES (per 100k)
+        Cln   = ((C_RL+C_RH+C_UL+C_UH)/chi(times)*1e5), # Clinical TB (per 100k)
+        ClnLo = ((S_RL+S_UL)/(N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL+N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL)*1e5), # Clinical TB in low SES (per 100k)
+        ClnHi = ((S_RH+S_UH)/(N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH+N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH)*1e5), # Clinical TB in high SES (per 100k)
+        ClnUr = ((S_UH+S_UL)/(N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL+N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH)*1e5), # Clinical TB in urban (per 100k)
+        ClnRu = ((S_RH+S_RL)/(N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL+N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH)*1e5), # Clinical TB in urban (per 100k)
+        ClnRL = (C_RL/(N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL)*1e5), # Clinical TB Rural - Low SES (per 100k)
+        ClnRH = (C_RH/(N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH)*1e5), # Clinical TB Rural - High SES (per 100k)
+        ClnUL = (C_UL/(N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL)*1e5), # Clinical TB Urban - Low SES (per 100k)
+        ClnUH = (C_UH/(N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH)*1e5), # Clinical TB Urban - High SES (per 100k)
+        TBc   = (S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH)/chi(times)*1e5, # Infectious TB (per 100k)
+        TBcLo = ((S_RL+S_UL+C_RL+C_UL)/(N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL+N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL)*1e5), # Infectious TB in low SES (per 100k)
+        TBcHi = ((S_RH+S_UH+C_RH+C_UH)/(N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH+N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH)*1e5), # Infectious TB in high SES (per 100k)
+        TBcUr = ((S_UH+S_UL+C_UH+C_UL)/(N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL+N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH)*1e5), # Infectious TB in urban (per 100k)
+        TBcRu = ((S_RH+S_RL+C_RH+C_RL)/(N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL+N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH)*1e5), # Infectious TB in urban (per 100k)
+        TBcRL = ((S_RL+C_RL)/(N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL)*1e5), # Infectious TB Rural - Low SES (per 100k)
+        TBcRH = ((S_RH+C_RH)/(N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH)*1e5), # Infectious TB Rural - High SES (per 100k)
+        TBcUL = ((S_UL+C_UL)/(N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL)*1e5), # Infectious TB Urban - Low SES (per 100k)
+        TBcUH = ((S_UH+C_UH)/(N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH)*1e5), # Infectious TB Urban - High SES (per 100k)
+        Mor   = (omega(times)*(C_RL+C_RH+C_UL+C_UH))/chi(times)*1e5, # Clinical TB mortality per time (per 100k)
+        Dxs   = (iota_cln(times)*(C_RL+C_RH+C_UL+C_UH))/chi(times)*1e5, # Notifications cTB per time in adults (per 100k)
+        Spr   = (S_RL+S_RH+S_UL+S_UH)/(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion scTB/infectious TB
+        MinIf = (M_RL+M_RH+M_UL+M_UH)/(M_RL+M_RH+M_UL+M_UH+S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion minTB
+        SubIf = (S_RL+S_RH+S_UL+S_UH)/(M_RL+M_RH+M_UL+M_UH+S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion scTB
+        ClnIf = (C_RL+C_RH+C_UL+C_UH)/(M_RL+M_RH+M_UL+M_UH+S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion clnTB
+        URs   = (S_UL+S_UH)/(S_RL+S_RH), # Relative urban/rural in scTB
+        URc   = (C_UL+C_UH)/(C_RL+C_RH), # Relative urban/rural in cTB
+        HLs   = (S_RH+S_UH)/(S_RL+S_UL), # Relative high/low SES in scTB
+        HLc   = (C_RH+C_UH)/(C_RL+C_UL), # Relative high/low SES in cTB
         ARIsi = ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_RL+N_RH+N_UL+N_UH), # ARI: Susceptible -> Infected (%) 
         ARIoi = ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(O_RL+O_RH+O_UL+O_UH)*theta_cleinf(times), # ARI: Cleared -> Infected (%) 
         ARIpi = ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(P_RL+P_RH+P_UL+P_UH)*theta_recinf, # ARI: Recovered -> Infected (%) 
-        ARI = ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH))))) # ARI
+        ARI   = ((beta(times)/chi(times))*((kappa(times)*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH))))) # ARI
     })
   }
   
@@ -257,19 +317,96 @@ outbase <- as.data.frame(ode(parms_base)) %>%
 outacfa <- as.data.frame(ode(parms_ACFA)) %>% 
   mutate(type = "acfa")
 
+outacfb <- as.data.frame(ode(parms_ACFB)) %>% 
+  mutate(type = "acfb")
+
+outacfc <- as.data.frame(ode(parms_ACFC)) %>% 
+  mutate(type = "acfc")
+
 # 5. Data curation ==========
-outs <- rbind(outbase, outacfa) %>% 
+outs <- rbind(outbase, outacfa, outacfb, outacfc) %>% 
   pivot_longer(cols = -c(time, type), names_to = "var", values_to = "val")
 
 # 6. Plots ==========
-
 prev_targets <- c(150, 100, 50, 25)
+acf_year <- unique(acfa_year, acfb_year, acfc_year)
+dis_state <- factor(c("Minimal","Subclinical","Clinical"), levels = c("Minimal","Subclinical","Clinical"))
+scenarios <- c("Scenario 1", "Scenario 2", "Scenario 3", "Baseline")
+type_label <- labeller(type = c("acfa" = "Scenario 1", "acfb" = "Scenario 2", "acfc" = "Scenario 3", "base" = "Baseline"))
+dem_urbrur <- c("Rural", "Urban")
+dem_ses <- c("High","Low")
 
+# TB prevalence per scenarios 
+tiff(here("plots", "TBprev.tiff"), width = 6, height = 5, units = 'in', res = 150)
 ggplot() +
   geom_line(data = filter(outs, var == "TBc"), aes(x = time, y = val, colour = type)) +
-  scale_color_manual(values = c("#CE2931", "#2984ce"), name = "Scenarios") +
+  scale_color_manual(values = c("#CE2931", "#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_y_continuous(breaks = seq(0,200,25), limits = c(0,200), expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
   labs(x = "Year", y = "TB prevalence rate (per 100K)") +
   geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
-  geom_hline(yintercept = prev_targets, linetype = "solid", color = "gray") +
-  theme_minimal()
-  
+  geom_hline(yintercept = prev_targets, linetype = "dashed", color = "gray") +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"))
+dev.off()
+
+# Prevalence rate (urban vs rural)
+tiff(here("plots", "TBprev_urbvrur.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot(data = outs) +
+  facet_wrap(~type, labeller = type_label) +
+  geom_line(data = filter(outs, var %in% c("SubRu","SubUr")), aes(x = time, y = val, colour = var)) +
+  scale_color_manual(values = c("#1D2D5F", "#CE2931"), name = "Area:", labels = dem_urbrur) +
+  scale_y_continuous(breaks = seq(0,150,25), limits = c(0,150), expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "TB prevalence (per 100K)") +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"), panel.spacing.x = unit(10, "mm"))
+dev.off()
+
+# Total prevalence (low vs high SES)
+tiff(here("plots", "TBprev_lovhi.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot(data = outs) +
+  facet_wrap(~type, labeller = type_label) +
+  geom_line(data = filter(outs, var %in% c("SubHi","SubLo")), aes(x = time, y = val, colour = var)) +
+  scale_color_manual(values = c("#1D2D5F", "#CE2931"), name = "SES:", labels = dem_ses) +
+  scale_y_continuous(breaks = seq(0,150,25), limits = c(0,150), expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "TB prevalence (per 100K)") +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"), panel.spacing.x = unit(10, "mm"))
+dev.off()
+
+# Proportion subclinical
+tiff(here("plots", "Prop_scTB.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot(data = outs) +
+  facet_wrap(~type, labeller = type_label) +
+  geom_line(data = filter(outs, var == "Spr"), aes(x = time, y = val, colour = var)) +
+  scale_color_manual(values = "#CE2931", name = NULL, labels = NULL) +
+  scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "Proportion subclinical TB (scTB/infTB)") +
+  theme_bw() +
+  theme(legend.position = "none", plot.margin = margin(10,15,5,10,"pt"), panel.spacing.x = unit(10, "mm"))
+dev.off()
+
+# Disease states
+tiff(here("plots", "Prop_disstates.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot(data = outs) +
+  facet_wrap(~type, labeller = type_label) +
+  geom_line(data = filter(outs, var %in% c("MinIf","SubIf","ClnIf")), aes(x = time, y = val, colour = var)) +
+  scale_color_manual(values = c("#2984CE","#CE2931","#1D2D5F"), name = "State", labels = dis_state) +
+  scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "Proportion disease state") +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"), panel.spacing.x = unit(10, "mm"))
+dev.off()

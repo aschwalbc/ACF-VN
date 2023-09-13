@@ -17,29 +17,29 @@ library(cowplot) # Publication quality figures
 # 1. Parameters ==========
 # 1.1 Baseline parameters (for testing)
 parms <- c(
-  beta = 18.87,         # Contact (per person/year) parameter
-  kappa = 0.74,         # Relative infectiousness
-  gamma_infcle = 1.12,  # REG: Infected -> Cleared
-  lambda_infmin = 0.20, # PROG: Infected -> Minimal
-  gamma_mincle = 0.17,  # REG: Minimal -> Cleared
-  theta_cleinf = 0.91,  # REINF: Cleared -> Infected
+  beta = 8,             # Contact (per person/year) parameter
+  kappa = 0.75,         # Relative infectiousness
+  gamma_infcle = 1.83,  # REG: Infected -> Cleared
+  lambda_infmin = 0.21, # PROG: Infected -> Minimal
+  gamma_mincle = 0.16,  # REG: Minimal -> Cleared
+  theta_cleinf = 0.88,  # REINF: Cleared -> Infected
   lambda_minsub = 0.25, # PROG: Minimal -> Subclinical
-  lambda_infsub = 0.09, # PROG: Infected -> Subclinical
-  gamma_submin = 1.50,  # REG: Subclinical -> Minimal
-  lambda_subcln = 0.89, # PROG: Subclinical -> Clinical
-  gamma_clnsub = 0.57,  # REG: Clinical -> Subclinical
-  omega_ini = 0.32,     # Mortality (Initial)
-  omega_fin = 0.20,     # Mortality (Final)
-  iota_cln_ini = 0.38,  # Diagnosis Clinical (Initial)
-  iota_cln_fin = 0.90,  # Diagnosis Clinical (Final)
-  phi_cln_ini = 0.72,   # Treatment failure Clinical (Initial) 
+  lambda_infsub = 0.07, # PROG: Infected -> Subclinical
+  gamma_submin = 1.58,  # REG: Subclinical -> Minimal
+  lambda_subcln = 0.77, # PROG: Subclinical -> Clinical
+  gamma_clnsub = 0.53,  # REG: Clinical -> Subclinical
+  omega_ini = 0.3,      # Mortality (Initial)
+  omega_fin = 0.23,     # Mortality (Final)
+  iota_cln_ini = 0.44,  # Diagnosis Clinical (Initial)
+  iota_cln_fin = 0.9,   # Diagnosis Clinical (Final)
+  phi_cln_ini = 0.69,   # Treatment failure Clinical (Initial) 
   phi_cln_fin = 0.09,   # Treatment failure Clinical (Final)
-  tau_min = 0.02,       # RELAP: Recovered -> Minimal 
-  tau_sub = 0.02,       # RELAP: Recovered -> Subclinical
+  tau_min = 0.03,       # RELAP: Recovered -> Minimal 
+  tau_sub = 0.04,       # RELAP: Recovered -> Subclinical
   rho_ini = 0.78,       # Proportion rural (Initial)
-  rho_fin = 0.10,       # Proportion rural (Final)
+  rho_fin = 0.04,       # Proportion rural (Final)
   sigma_ini = 0.78,     # Proportion low SES (Initial)
-  sigma_fin = 0.10)     # Proportion low SES (Final)
+  sigma_fin = 0.16)     # Proportion low SES (Final)
 
 parameters <- as.data.frame(parms)
 parameters$parameter <- c("beta","kappa","gamma_infcle","lambda_infmin","gamma_mincle","theta_cleinf",
