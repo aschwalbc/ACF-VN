@@ -217,6 +217,7 @@ basepop <- basemod %>%
   mutate(across(everything(), ~ . / 100000)) %>% 
   mutate(Pop = as.numeric(WPP[WPP$year == 2020, 'pop'])) %>%  # Add adult population in 2020
   mutate(across(contains('_'), ~ . * Pop)) %>% # Calculate population per compartment
-  select(-Pop) # Remove variables
+  select(-Pop) # Remove variable
+
 export(basepop, here("data","basepop.Rdata")) # Save data frame
 rm(basemod, basepop, WPP)

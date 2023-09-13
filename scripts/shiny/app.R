@@ -189,17 +189,33 @@ ode <- function(parms, N = 100000, end_time = 2020) {
       return(list(c( 
         dN_RL, dN_RH, dN_UL, dN_UH, dI_RL, dI_RH, dI_UL, dI_UH, dO_RL, dO_RH, dO_UL, dO_UH, dM_RL, dM_RH, dM_UL, dM_UH, dRM_RL, dRM_RH, dRM_UL, dRM_UH,
         dS_RL, dS_RH, dS_UL, dS_UH, dRS_RL, dRS_RH, dRS_UL, dRS_UH, dC_RL, dC_RH, dC_UL, dC_UH, dRC_RL, dRC_RH, dRC_UL, dRC_UH, dP_RL, dP_RH, dP_UL, dP_UH),
-        Pop = (N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+O_RL+O_RH+O_UL+O_UH+M_RL+M_RH+M_UL+M_UH+dRM_RL+dRM_RH+dRM_UL+dRM_UH+S_RL+S_RH+S_UL+S_UH+RS_RL+RS_RH+RS_UL+RS_UH+C_RL+C_RH+C_UL+C_UH+RC_RL+RC_RH+RC_UL+RC_UH+P_RL+P_RH+P_UL+P_UH), # Total population
-        Sub = (S_RL+S_RH+S_UL+S_UH), # Subclinical TB (per 100k)
-        Cln = (C_RL+C_RH+C_UL+C_UH), # Clinical TB (per 100k)
-        TBc = (S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # All TB (per 100k)
-        Mor = (force_func_omega(time)*(C_RL+C_RH+C_UL+C_UH)), # Clinical TB mortality per time (per 100k)
-        Dxs = (force_func_iota(time)*(C_RL+C_RH+C_UL+C_UH)), # Notifications cTB per time in adults (per 100k)
-        Spr = (S_RL+S_RH+S_UL+S_UH)/(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion scTB
-        URs = (S_UL+S_UH)/(S_RL+S_RH), # Relative urban/rural in scTB
-        URc = (C_UL+C_UH)/(C_RL+C_RH), # Relative urban/rural in cTB
-        HLs = (S_RH+S_UH)/(S_RL+S_UL), # Relative high/low SES in scTB
-        HLc = (C_RH+C_UH)/(C_RL+C_UL), # Relative high/low SES in cTB
+        Pop   = (N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+O_RL+O_RH+O_UL+O_UH+M_RL+M_RH+M_UL+M_UH+dRM_RL+dRM_RH+dRM_UL+dRM_UH+S_RL+S_RH+S_UL+S_UH+RS_RL+RS_RH+RS_UL+RS_UH+C_RL+C_RH+C_UL+C_UH+RC_RL+RC_RH+RC_UL+RC_UH+P_RL+P_RH+P_UL+P_UH), # Total population
+        PRL   = (N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL), # Population Rural - Low SES
+        PRH   = (N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH), # Population Rural - High SES
+        PUL   = (N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL), # Population Urban - Low SES
+        PUH   = (N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH), # Population Urban - High SES
+        Sub   = (S_RL+S_RH+S_UL+S_UH), # Subclinical TB (per 100k)
+        SubRL = (S_RL/(N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL)*1e5),
+        SubRH = (S_RH/(N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH)*1e5),
+        SubUL = (S_UL/(N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL)*1e5),
+        SubUH = (S_UH/(N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH)*1e5),
+        Cln   = (C_RL+C_RH+C_UL+C_UH), # Clinical TB (per 100k)
+        ClnRL = (C_RL/(N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL)*1e5),
+        ClnRH = (C_RH/(N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH)*1e5),
+        ClnUL = (C_UL/(N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL)*1e5),
+        ClnUH = (C_UH/(N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH)*1e5),
+        TBc   = (S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # All TB (per 100k)
+        TBcRL = ((S_RL+C_RL)/(N_RL+I_RL+O_RL+M_RL+RM_RL+RS_RL+C_RL+RC_RL+P_RL)*1e5),
+        TBcRH = ((S_RH+C_RH)/(N_RH+I_RH+O_RH+M_RH+RM_RH+RS_RH+C_RH+RC_RH+P_RH)*1e5),
+        TBcUL = ((S_UL+C_UL)/(N_UL+I_UL+O_UL+M_UL+RM_UL+RS_UL+C_UL+RC_UL+P_UL)*1e5),
+        TBcUH = ((S_UH+C_UH)/(N_UH+I_UH+O_UH+M_UH+RM_UH+RS_UH+C_UH+RC_UH+P_UH)*1e5),
+        Mor   = (force_func_omega(time)*(C_RL+C_RH+C_UL+C_UH)), # Clinical TB mortality per time (per 100k)
+        Dxs   = (force_func_iota(time)*(C_RL+C_RH+C_UL+C_UH)), # Notifications cTB per time in adults (per 100k)
+        Spr   = (S_RL+S_RH+S_UL+S_UH)/(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion scTB
+        URs   = (S_UL+S_UH)/(S_RL+S_RH), # Relative urban/rural in scTB
+        URc   = (C_UL+C_UH)/(C_RL+C_RH), # Relative urban/rural in cTB
+        HLs   = (S_RH+S_UH)/(S_RL+S_UL), # Relative high/low SES in scTB
+        HLc   = (C_RH+C_UH)/(C_RL+C_UL), # Relative high/low SES in cTB
         ARIsi = ((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_RL+N_RH+N_UL+N_UH), # ARI: Susceptible -> Infected (%) 
         ARIoi = ((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(O_RL+O_RH+O_UL+O_UH)*theta_cleinf, # ARI: Cleared -> Infected (%) 
         ARIpi = ((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(P_RL+P_RH+P_UL+P_UH)*theta_recinf, # ARI: Recovered -> Infected (%) 
@@ -207,7 +223,8 @@ ode <- function(parms, N = 100000, end_time = 2020) {
     })
   }
   
-  yini <- c(N_RL = 99000, N_RH = 0, N_UL = 0, N_UH = 0, I_RL = 0, I_RH = 0, I_UL = 0, I_UH = 0, O_RL = 0, O_RH = 0, O_UL = 0, O_UH = 0,
+  yini <- c(N_RL = 99000, N_RH = 0, N_UL = 0, N_UH = 0, I_RL = 0, I_RH = 0, I_UL = 0, I_UH = 0, 
+            O_RL = 0, O_RH = 0, O_UL = 0, O_UH = 0,
             M_RL = 0, M_RH = 0, M_UL = 0, M_UH = 0, RM_RL = 0, RM_RH = 0, RM_UL = 0, RM_UH = 0,
             S_RL = 0, S_RH = 0, S_UL = 0, S_UH = 0, RS_RL = 0, RS_RH = 0, RS_UL = 0, RS_UH = 0,
             C_RL = 1000, C_RH = 0, C_UL = 0, C_UH = 0, RC_RL = 0, RC_RH = 0, RC_UL = 0, RC_UH = 0,
