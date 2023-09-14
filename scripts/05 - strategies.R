@@ -280,6 +280,7 @@ ode <- function(parms, end_time = 2050) {
         Mor   = (omega(times)*(C_RL+C_RH+C_UL+C_UH))/chi(times)*1e5, # Clinical TB mortality per time (per 100k)
         Dxs   = (iota_cln(times)*(C_RL+C_RH+C_UL+C_UH))/chi(times)*1e5, # Notifications cTB per time in adults (per 100k)
         Spr   = (S_RL+S_RH+S_UL+S_UH)/(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion scTB/infectious TB
+        Cpr   = (C_RL+C_RH+C_UL+C_UH)/(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion cTB/infectious TB
         MinIf = (M_RL+M_RH+M_UL+M_UH)/(M_RL+M_RH+M_UL+M_UH+S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion minTB
         SubIf = (S_RL+S_RH+S_UL+S_UH)/(M_RL+M_RH+M_UL+M_UH+S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion scTB
         ClnIf = (C_RL+C_RH+C_UL+C_UH)/(M_RL+M_RH+M_UL+M_UH+S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion clnTB
@@ -332,7 +333,8 @@ outs <- rbind(outbase, outacfa, outacfb, outacfc) %>%
 # 6. Plots ==========
 prev_targets <- c(150, 100, 50, 25)
 acf_year <- unique(acfa_year, acfb_year, acfc_year)
-dis_state <- factor(c("Minimal","Subclinical","Clinical"), levels = c("Minimal","Subclinical","Clinical"))
+dis_state <- factor(c("Clinical","Subclinical","Minimal"))
+inf_dis <- c("Clinical", "Subclinical")
 scenarios <- c("Scenario 1", "Scenario 2", "Scenario 3", "Baseline")
 type_label <- labeller(type = c("acfa" = "Scenario 1", "acfb" = "Scenario 2", "acfc" = "Scenario 3", "base" = "Baseline"))
 dem_urbrur <- c("Rural", "Urban")
@@ -383,22 +385,24 @@ dev.off()
 # Proportion subclinical
 tiff(here("plots", "Prop_scTB.tiff"), width = 6, height = 5, units = 'in', res = 150)
 ggplot(data = outs) +
-  geom_line(data = filter(outs, var == "Spr"), aes(x = time, y = val, colour = type)) +
-  scale_color_manual(values = c("#CE2931", "#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  facet_wrap(~type, labeller = type_label) +
+  geom_area(data = filter(outs, var %in% c("Cpr","Spr")), aes(x = time, y = val, fill = var), position = "fill") +
+  scale_fill_manual(values = c("#F58B65","#FDC75D"), name = NULL, labels = inf_dis) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
   scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
-  labs(x = "Year", y = "Proportion subclinical TB (scTB/infTB)") +
+  labs(x = "Year", y = "Proportion infectious TB") +
   theme_bw() +
-  theme(legend.position = "bottom", legend.direction = "horizontal")
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"), panel.spacing.x = unit(10, "mm"))
 dev.off()
 
 # Disease states
 tiff(here("plots", "Prop_disstates.tiff"), width = 6, height = 5, units = 'in', res = 150)
 ggplot(data = outs) +
   facet_wrap(~type, labeller = type_label) +
-  geom_area(data = filter(outs, var %in% c("MinIf","SubIf","ClnIf")), aes(x = time, y = val, fill = reorder(var, -val)), position = "fill") +
-  scale_fill_manual(values = c("#4DC4CB","#FDC75D","#F58B65"), name = "State:", labels = dis_state) +
+  geom_area(data = filter(outs, var %in% c("ClnIf","SubIf","MinIf")), aes(x = time, y = val, fill = reorder(var, -val, decreasing = TRUE)), position = "fill") +
+  scale_fill_manual(values = c("#F58B65","#FDC75D","#4DC4CB"), name = "State:", labels = dis_state) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
   scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
