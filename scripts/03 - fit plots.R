@@ -10,14 +10,10 @@ library(tidyverse) # To use tidyverse
 library(reshape2) # Reshaping data easily
 library(data.table) # Faster than data.frame, allows use of j operator (:=)
 library(patchwork) # Plot composition
-library(gganimate) # Adds animation to plot
 
 # 1. Load data ==========
 results <- as.data.table(import(here("outputs","results.Rdata")))
 targets <- as.data.table(import(here("data","targets.Rdata")))
-
-res <- results %>% 
-  filter(time >= 2000)
 
 # 2. Plot ==========
 title_size = 13
@@ -43,9 +39,8 @@ limits = c(1999, 2020.5)
 from_to = seq(1999,2020)
 
 a = ggplot(subset(results, var == "TBc" & time %in% from_to), aes(x=time)) +
-  geom_line(aes(y = `50%`, size = line_thickness, na.rm=TRUE, colour = colour_line)) +
+  geom_line(aes(y = `50%`), size = line_thickness, na.rm=TRUE, colour = colour_line) +
   geom_ribbon(aes(ymin=`2.5%`, ymax= `97.5%`), fill = colour_line, alpha=alpha) +
-  #geom_point(data = subset(targets, var == "TBc"), aes(y = val), size = point_size, colour = "black") +
   geom_errorbar(data = subset(targets, var == "TBc"), aes(ymin = lo, ymax = hi), size = line_thickness, width = error_bar_width) + 
   scale_x_continuous(breaks = breaks, limits = limits, expand = c(0, 0)) +
   scale_y_continuous(breaks = seq(0, 300, 50), expand = c(0, 0)) +
@@ -71,7 +66,6 @@ a = ggplot(subset(results, var == "TBc" & time %in% from_to), aes(x=time)) +
 b = ggplot(subset(results, var == "Spr" & time %in% from_to), aes(x=time)) +
   geom_line(aes(y = `50%`), size = line_thickness, na.rm=TRUE, colour = colour_line) +
   geom_ribbon(aes(ymin=`2.5%`, ymax= `97.5%`), fill = colour_line, alpha=alpha) +
-  #geom_point(data = subset(targets, var == "Spr"), aes(y = val), size = point_size, colour = "black") +
   geom_errorbar(data = subset(targets, var == "Spr"), aes(ymin = lo, ymax = hi), size = line_thickness, width = error_bar_width) +
   scale_x_continuous(breaks = breaks, limits = limits, expand = c(0, 0)) +
   scale_y_continuous(breaks = seq(0, 1, 0.25), expand = c(0, 0)) +
@@ -97,7 +91,6 @@ b = ggplot(subset(results, var == "Spr" & time %in% from_to), aes(x=time)) +
 c = ggplot(subset(results, var == "Mor" & time %in% from_to), aes(x=time)) +
   geom_line(aes(y = `50%`), size = line_thickness, na.rm=TRUE, colour = colour_line) +
   geom_ribbon(aes(ymin=`2.5%`, ymax= `97.5%`), fill = colour_line, alpha=alpha) +
-  #geom_point(data = subset(targets, var == "Mor"), aes(y = val), size = point_size, colour = "black") +
   geom_errorbar(data = subset(targets, var == "Mor"), aes(ymin = lo, ymax = hi), size = line_thickness, width = error_bar_width) +
   scale_x_continuous(breaks = breaks, limits = limits, expand = c(0, 0)) +
   scale_y_continuous(breaks = seq(0, 60, 5), expand = c(0, 0)) +
@@ -123,7 +116,6 @@ c = ggplot(subset(results, var == "Mor" & time %in% from_to), aes(x=time)) +
 d = ggplot(subset(results, var == "Dxs" & time %in% from_to), aes(x=time)) +
   geom_line(aes(y = `50%`), size = line_thickness, na.rm=TRUE, colour = colour_line) +
   geom_ribbon(aes(ymin=`2.5%`, ymax= `97.5%`), fill = colour_line, alpha=alpha) +
-  #geom_point(data = subset(targets, var == "Dxs"), aes(y = val), size = point_size, colour = "black") +
   geom_errorbar(data = subset(targets, var == "Dxs"), aes(ymin = lo, ymax = hi), size = line_thickness, width = error_bar_width) +
   scale_x_continuous(breaks = breaks, limits = limits, expand = c(0, 0)) +
   scale_y_continuous(breaks = seq(0, 100, 10), expand = c(0, 0)) +
@@ -149,7 +141,6 @@ d = ggplot(subset(results, var == "Dxs" & time %in% from_to), aes(x=time)) +
 e = ggplot(subset(results, var == "URs" & time %in% from_to), aes(x=time)) +
   geom_line(aes(y = `50%`), size = line_thickness, na.rm=TRUE, colour = colour_line) +
   geom_ribbon(aes(ymin=`2.5%`, ymax= `97.5%`), fill = colour_line, alpha=alpha) +
-  #geom_point(data = subset(targets, var == "URs"), aes(y = val), size = point_size, colour = "black") +
   geom_errorbar(data = subset(targets, var == "URs"), aes(ymin = lo, ymax = hi), size = line_thickness, width = error_bar_width) +
   scale_x_continuous(breaks = breaks, limits = limits, expand = c(0, 0)) +
   scale_y_continuous(breaks = seq(0, 2, 0.25), expand = c(0, 0)) +
@@ -175,7 +166,6 @@ e = ggplot(subset(results, var == "URs" & time %in% from_to), aes(x=time)) +
 f = ggplot(subset(results, var == "URc" & time %in% from_to), aes(x=time)) +
   geom_line(aes(y = `50%`), size = line_thickness, na.rm=TRUE, colour = colour_line) +
   geom_ribbon(aes(ymin=`2.5%`, ymax= `97.5%`), fill = colour_line, alpha=alpha) +
-  #geom_point(data = subset(targets, var == "URc"), aes(y = val), size = point_size, colour = "black") +
   geom_errorbar(data = subset(targets, var == "URc"), aes(ymin = lo, ymax = hi), size = line_thickness, width = error_bar_width) +
   scale_x_continuous(breaks = breaks, limits = limits, expand = c(0, 0)) +
   scale_y_continuous(breaks = seq(0, 2, 0.25), expand = c(0, 0)) +
@@ -201,7 +191,6 @@ f = ggplot(subset(results, var == "URc" & time %in% from_to), aes(x=time)) +
 g = ggplot(subset(results, var == "HLs" & time %in% from_to), aes(x=time)) +
   geom_line(aes(y = `50%`), size = line_thickness, na.rm=TRUE, colour = colour_line) +
   geom_ribbon(aes(ymin=`2.5%`, ymax= `97.5%`), fill = colour_line, alpha=alpha) +
-  #geom_point(data = subset(targets, var == "HLs"), aes(y = val), size = point_size, colour = "black") +
   geom_errorbar(data = subset(targets, var == "HLs"), aes(ymin = lo, ymax = hi), size = line_thickness, width = error_bar_width) +
   scale_x_continuous(breaks = breaks, limits = limits, expand = c(0, 0)) +
   scale_y_continuous(breaks = seq(0, 2, 0.25), expand = c(0, 0)) +
@@ -227,7 +216,6 @@ g = ggplot(subset(results, var == "HLs" & time %in% from_to), aes(x=time)) +
 h = ggplot(subset(results, var == "HLc" & time %in% from_to), aes(x=time)) +
   geom_line(aes(y = `50%`), size = line_thickness, na.rm=TRUE, colour = colour_line) +
   geom_ribbon(aes(ymin=`2.5%`, ymax= `97.5%`), fill = colour_line, alpha=alpha) +
-  #geom_point(data = subset(targets, var == "HLc"), aes(y = val), size = point_size, colour = "black") +
   geom_errorbar(data = subset(targets, var == "HLc"), aes(ymin = lo, ymax = hi), size = line_thickness, width = error_bar_width) +
   scale_x_continuous(breaks = breaks, limits = limits, expand = c(0, 0)) +
   scale_y_continuous(breaks = seq(0, 2, 0.25), expand = c(0, 0)) +
