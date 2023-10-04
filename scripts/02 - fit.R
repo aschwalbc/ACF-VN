@@ -356,16 +356,8 @@ export(non_imp_pts[[1]],here("outputs","w1_pts.Rdata")) # Save data frame
 cat("New parameter points generated\n")
 beepr::beep(2)
 
-# 3.6 Reload data
-data_files <- list.files(here("outputs"), pattern = "w[0-9]+_pts.Rdata", full.names = TRUE)
-for (file in data_files) {
-  num <- as.integer(gsub("[^0-9]", "", basename(file)))
-  data <- import(file)
-  non_imp_pts[[num]] <- data
-}
-
-# 3.6 HMER loop runs
-w <- 53 # Update wave run
+# 3.5 HMER loop runs
+w <- 52 # Update wave run
 tic()
 cat("Running wave:", w, "\n")
 
@@ -437,11 +429,29 @@ cat("New parameter points generated\n")
 toc()
 beepr::beep(2)
 
+# 3.6 Reload data
+# Non-implausible points
+data_files <- list.files(here("outputs","pts"), pattern = "w[0-9]+_pts.Rdata", full.names = TRUE)
+for (file in data_files) {
+  num <- as.integer(gsub("[^0-9]", "", basename(file)))
+  data <- import(file)
+  non_imp_pts[[num]] <- data
+}
+
+# Waves
+data_files <- list.files(here("outputs","waves"), pattern = "w[0-9]+_wave.Rdata", full.names = TRUE)
+for (file in data_files) {
+  num <- as.integer(gsub("[^0-9]", "", basename(file)))
+  data <- import(file)
+  wave[[num]] <- data
+}
+
 # 4. Results ==========
 pts_fin <- non_imp_pts[[w]]
 
-# Isolate good waves
-pts_fin <- as.data.frame(do.call("rbind", wave_check))[1:length(parms)]
+# Isolate best parameter sets
+plaus_pts <- as.data.frame(do.call("rbind", wave_check))[1:length(parms)]
+export(plaus_pts,here("outputs", "pts", "plaus_pts.Rdata")) # Save data frame
 
 quants <- c(0.025,0.5,0.975) # Set quantiles
 parameters <- apply(pts_fin, 2, quantile, probs = quants, na.rm = TRUE) # Set parameter quantiles

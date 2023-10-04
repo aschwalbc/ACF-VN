@@ -11,8 +11,15 @@ library(naniar) # Visualise missingness
 
 # 1. Load data ==========
 data <- as.data.table(import(here("data","data.csv")))
+WPP <- import(here("data","pop","WPP_Pop_1950-2100.csv")) # Population size 1950-2100
+WPPb <- import(here("data","pop","WPP_Births_1950-2100.csv")) # Births 1950-2100
+WPPda <- import(here("data","pop","WPP_Deaths_1950-2021.csv")) # Deaths 1950-2021
+WPPdb <- import(here("data","pop","WPP_Deaths_2022-2100.csv")) # Deaths 2022-2100
+WUP <- import(here("data","pop","WUP_Urban_1950-2050.csv")) # Proportion Urban 1950-2050
+WDI <- import(here("data","pop","WB_WDI.csv")) # GDP World Development Indicators
+WEO <- import(here("data","pop","WEO.csv")) # World Economic Outputs
 
-# 2. Data curation ==========
+# 2. TB prevalence survey data ==========
 VN <- data %>% 
   select(survey_id, NewID_survey, sex_final, age_final, agegroup, stratum_id, quartile_Nicola_All, tbcase, starts_with("cough"),
          symptoms_any_NF, fever, weight_loss, night_sweats, sputum_c, blood_sputum_c) %>% 
@@ -31,14 +38,12 @@ VN <- data %>%
   #mutate(cough2w_surv = ifelse(cough_surv == 'yes' & is.na(cough2w_surv), 'less than 2w', cough2w_surv)) %>% # fix missingness of cough duration
   select(id, survey_n, sex, age, agegp, stratum, ses, tbcase, cough_surv, cough_nf, cough2w_surv, cough2w_nf, sympt_surv, sympt_nf)
 
-# 3. Data exploration ==========
 # Missingness of cough duration per stratum and SES status
 table(VN$cough2w_surv, VN$stratum, useNA = 'always')
 
 gg_miss_var(VN, show_pct = TRUE, facet = stratum) + ylim(0,100)
 gg_miss_var(VN, show_pct = TRUE, facet = ses) + ylim(0,100)
 
-# 4. Results ==========
 N = 100000 # Per 100,000 inhabitants
 
 # Survey 1: 2007-2008
@@ -124,4 +129,94 @@ nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'yes' & stratum == 'urban'))/n
 # Relative stratum (high/low)
 nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'no' & ses == 'high'))/nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'no' & (ses == 'high' | ses == 'low')))
 nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'yes' & ses == 'high'))/nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'yes' & (ses == 'high' | ses == 'low')))
+
+# 3. Population and demographics ==========
+WPP <- WPP %>% # Population data
+  rename(iso3 = ISO3_code, year = Time, agegp = AgeGrp, pop = PopTotal) %>%
+  select(iso3, year, agegp, pop) %>%
+  filter(iso3 == "VNM") %>%
+  filter(year >= 2020 & year <= 2050) %>% 
+  filter(!agegp %in% c('0-4','5-9','10-14')) %>%
+  group_by(iso3, year) %>% 
+  summarise(pop = sum(pop)*1e3)
+
+WPPb <- WPPb %>% # Birth data
+  rename(iso3 = ISO3_code, year = Time, births = Births) %>%
+  select(iso3, year, births) %>%
+  filter(iso3 == "VNM") %>%
+  filter(year >= 2020 & year <= 2050) %>%
+  mutate(births = births*1e3)
+
+WPPda <- WPPda %>% # Mortality data (1950-2021)
+  rename(iso3 = ISO3_code, year = Time, agegp = AgeGrpStart, mort = DeathTotal) %>%
+  select(iso3, year, agegp, mort) %>%
+  filter(iso3 == "VNM") %>%
+  filter(year >= 2020) %>% 
+  filter(agegp >= 15) %>%
+  group_by(iso3, year) %>%
+  summarise(mort = sum(mort)*1e3)
+
+WPPdb <- WPPdb %>% # Mortality data (2022-2100)
+  rename(iso3 = ISO3_code, year = Time, agegp = AgeGrpStart, mort = DeathTotal) %>%
+  select(iso3, year, agegp, mort) %>%
+  filter(iso3 == "VNM") %>%
+  filter(year <= 2050) %>% 
+  filter(agegp >= 15) %>%
+  group_by(iso3, year) %>%
+  summarise(mort = sum(mort)*1e3)
+
+WPPd <- rbind(WPPda,WPPdb)
+rm(WPPda,WPPdb)
+
+WPP <- WPP %>%
+  left_join(WPPb, by=c("iso3","year")) %>%
+  inner_join(WPPd, by=c("iso3","year")) %>%
+  mutate(mortrate = mort/pop, birthrate = births/pop) 
+rm(WPPb,WPPd)
+
+export(WPP,here("data","pop","WPP.Rdata")) # Save data frame
+
+WUP <- clean_names(WUP) %>% # Urbanisation data
+  filter(index == 115) %>% 
+  select(starts_with("x")) %>%
+  rename_all(~gsub("^x", "", .)) %>% 
+  mutate_all(~ . / 100) %>% 
+  pivot_longer(cols = everything(), names_to = "year", values_to = "urbprop") %>% 
+  filter(year >= 2020) %>% 
+  mutate(rurprop = 1-urbprop, iso3 = "VNM") %>% 
+  select(iso3, year, urbprop, rurprop)
+
+export(WUP,here("data","pop","WUP.Rdata")) # Save data frame
+
+WEO <- WEO %>% # World Economic Output (GDP)
+  setNames(WEO[1,]) %>%
+  slice(2:n()) %>% 
+  clean_names() %>% 
+  rename_all(~gsub("^x", "", .)) %>% 
+  rename(iso3 = iso, var = subject_descriptor) %>% 
+  select(iso3, var, matches("^\\d")) %>% 
+  mutate_at(vars(-iso3, -var), ~as.numeric(gsub(",", "", gsub("\\.", "", ., fixed = TRUE)))) %>% 
+  filter(var == "Gross domestic product per capita, constant prices") %>% 
+  select(-var) %>% 
+  pivot_longer(cols = -iso3, names_to = "year", values_to = "gdp") %>% 
+  mutate(year = as.numeric(year)) %>% 
+  mutate(lowses = NA) %>% 
+  mutate(lowses = case_when(year == 2008 ~ 0.5946, year == 2018 ~ 0.6034, TRUE ~ lowses))
+
+gdpses <- WEO %>% 
+  filter(!is.na(lowses)) %>% 
+  lm(lowses ~ gdp, data = .)
+
+WEO <- WEO %>% 
+  mutate(lowses = predict(gdpses, newdata = .))
+
+sesmodel <- lm(lowses ~ year, data = WEO)
+
+WEO_exp <- data.frame(year = 2029:2050) %>% 
+  mutate(lowses = predict(sesmodel, newdata = .))
+
+GDP <- rbind(select(WEO, c(year, lowses)), WEO_exp) %>% 
+  filter(year >= 2020)
+
+export(GDP, here("data","pop","GDP.Rdata")) # Save data frame
 
