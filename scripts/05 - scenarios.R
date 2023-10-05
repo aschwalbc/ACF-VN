@@ -240,6 +240,7 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
         HLs   = (S_RH+S_UH)/(S_RL+S_UL), # Relative high/low SES in scTB
         HLc   = (C_RH+C_UH)/(C_RL+C_UL), # Relative high/low SES in cTB
         HLt   = (S_RH+S_UH+C_RH+C_UH)/(S_RL+S_UL+C_RL+C_UL+S_RH+S_UH+C_RH+C_UH), # Proportion infectious TB in high SES
+        NumSC = (acf(floor(times))*((alpha_nds*(N_RL+I_RL+O_RL+P_RL+N_RH+I_RH+O_RH+P_RH+N_UL+I_UL+O_UL+P_UL+N_UH+I_UH+O_UH+P_UH))+(alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))),
         FPnds = (SN_RL+SI_RL+SO_RL+SP_RL+SN_RH+SI_RH+SO_RH+SP_RH+SN_UH+SI_UH+SO_UH+SP_UH+SN_UL+SI_UL+SO_UL+SP_UL),
         ARI   = ((beta/chi(times))*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH))))) # ARI
     })
@@ -303,7 +304,7 @@ outacfb_df <- do.call(rbind, outacfb)
 outs <- rbind(outbase_df, outacfa_df, outacfb_df) %>% 
   arrange(time) %>% 
   group_by(type) %>% 
-  mutate(cumMor = cumsum(tMor)) %>% 
+  mutate(cumMor = cumsum(tMor), cumFPnds = cumsum(FPnds), cumNumSC = cumsum(NumSC)) %>% 
   group_by(time) %>% 
   mutate(dMor = tMor - tMor[type == 'base'], dcumMor = cumMor - cumMor[type == 'base'],
          pTBc = TBc/TBc[type == 'base']) %>% 
@@ -536,6 +537,60 @@ ggplot() +
   scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
   labs(x = "Year", y = "False positive diagnoses") +
+  geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"))
+dev.off()
+
+# False positives
+tiff(here("plots", "Falsepos.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  geom_line(data = filter(outs, var == "FPnds"), aes(x = time, y = val, colour = type)) +
+  geom_ribbon(data = filter(outs, var == "FPnds"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  #scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-6, suffix = "K")) +
+  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "False positive diagnoses") +
+  geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"))
+dev.off()
+
+# Cumulative false positives
+tiff(here("plots", "CumFalsepos.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  geom_line(data = filter(outs, var == "cumFPnds"), aes(x = time, y = val, colour = type)) +
+  geom_ribbon(data = filter(outs, var == "cumFPnds"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  #scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-9, suffix = "M")) +
+  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "Cumulative false positive diagnoses") +
+  geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"))
+dev.off()
+
+# Cumulative number screened
+tiff(here("plots", "NumScreen.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  geom_line(data = filter(outs, var == "cumNumSC"), aes(x = time, y = val, colour = type)) +
+  geom_ribbon(data = filter(outs, var == "cumNumSC"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  #scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-9, suffix = "M")) +
+  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "Cumulative number screened") +
   geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
   theme_bw() +
   theme(legend.position = "bottom", legend.direction = "horizontal",
