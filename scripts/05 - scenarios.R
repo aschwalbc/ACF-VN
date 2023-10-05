@@ -54,10 +54,10 @@ acfa <- data.frame(parameter = character(), val = numeric()) %>%
 
 # 2.4 ACF Scenario B - CXR only, CXR+ get Xpert, Xpert+ get treatment
 acfb <- data.frame(parameter = character(), val = numeric()) %>% 
-  add_row(parameter = "alpha_min", val = prop_target*prop_reached*cxr_sens_min) %>% 
-  add_row(parameter = "alpha_sub", val = prop_target*prop_reached*cxr_sens_sub) %>%
-  add_row(parameter = "alpha_cln", val = prop_target*prop_reached*cxr_sens_cln) %>% 
-  add_row(parameter = "alpha_nds", val = prop_target*prop_reached*cxr_fp_nds)
+  add_row(parameter = "alpha_min", val = prop_target*prop_reached*cxr_sens_min*prov_sputum*xpert_sens_min) %>% 
+  add_row(parameter = "alpha_sub", val = prop_target*prop_reached*cxr_sens_sub*prov_sputum*xpert_sens_sub) %>%
+  add_row(parameter = "alpha_cln", val = prop_target*prop_reached*cxr_sens_cln*prov_sputum*xpert_sens_cln) %>% 
+  add_row(parameter = "alpha_nds", val = prop_target*prop_reached*cxr_fp_nds*prov_sputum*xpert_fp_nds)
 
 # 2.5 ACF Scenario C - CXR and Xpert for all, Xpert+ get treatment
 acfc <- data.frame(parameter = character(), val = numeric()) %>% 
@@ -289,8 +289,8 @@ for (i in 1:nrow(parms)) {
   outacfb[[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfb, acf_times = acf_year))
   outacfb[[i]] <- outacfb[[i]] %>% mutate(type = 'acfb', run = i)
 
-  # outacfc[[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfc, acf_times = acf_year))
-  # outacfc[[i]] <- outacfc[[i]] %>% mutate(type = 'acfc', run = i)
+  outacfc[[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfc, acf_times = acf_year))
+  outacfc[[i]] <- outacfc[[i]] %>% mutate(type = 'acfc', run = i)
   
   pb$tick()
 }
@@ -298,10 +298,10 @@ for (i in 1:nrow(parms)) {
 outbase_df <- do.call(rbind, outbase)
 outacfa_df <- do.call(rbind, outacfa)
 outacfb_df <- do.call(rbind, outacfb)
-# outacfc_df <- do.call(rbind, outacfc)
+outacfc_df <- do.call(rbind, outacfc)
 
 # 5. Data curation ==========
-outs <- rbind(outbase_df, outacfa_df, outacfb_df) %>% 
+outs <- rbind(outbase_df, outacfa_df, outacfb_df, outacfc_df) %>% 
   arrange(time) %>% 
   group_by(type) %>% 
   mutate(cumMor = cumsum(tMor), cumFPnds = cumsum(FPnds), cumNumSC = cumsum(NumSC)) %>% 
@@ -318,10 +318,8 @@ outs <- rbind(outbase_df, outacfa_df, outacfb_df) %>%
 prev_targets <- c(50, 25, 10)
 dis_state <- factor(c("Clinical","Subclinical","Minimal"))
 inf_dis <- c("Clinical", "Subclinical")
-#scenarios <- c("Scenario 1", "Scenario 2", "Scenario 3", "Baseline")
-scenarios <- c("ACF: Xpert", "ACF: CXR", "Baseline")
-#type_label <- labeller(type = c("acfa" = "Scenario 1", "acfb" = "Scenario 2", "acfc" = "Scenario 3", "base" = "Baseline"))
-type_label <- labeller(type = c("acfa" = "ACF: Xpert", "acfb" = "ACF: CXR", "acfc", "base" = "Baseline"))
+scenarios <- c("01: Xpert", "02: CXR->Xpert", "03: CXR", "Baseline")
+type_label <- labeller(type = c("acfa" = "01: Xpert", "acfb" = "02: CXR->Xpert", "acfc" = "03: CXR", "base" = "Baseline"))
 dem_urbrur <- c("Rural", "Urban")
 dem_ses <- c("High","Low")
 
@@ -329,10 +327,9 @@ dem_ses <- c("High","Low")
 tiff(here("plots", "TBprev.tiff"), width = 6, height = 5, units = 'in', res = 150)
 ggplot() +
   geom_line(data = filter(outs, var == "TBc"), aes(x = time, y = val, colour = type)) +
-  geom_ribbon(data = filter(outs, var == "TBc"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.5) +
-  #scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  geom_ribbon(data = filter(outs, var == "TBc"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,200,25), limits = c(0,200), expand = c(0,0)) +
   scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
@@ -348,10 +345,9 @@ dev.off()
 tiff(here("plots", "ARI.tiff"), width = 6, height = 5, units = 'in', res = 150)
 ggplot() +
   geom_line(data = filter(outs, var == "ARI"), aes(x = time, y = val, colour = type)) +
-  geom_ribbon(data = filter(outs, var == "ARI"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.5) +
-  #scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  geom_ribbon(data = filter(outs, var == "ARI"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(labels = scales::percent_format(scale = 100)) +
   scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
@@ -366,10 +362,9 @@ dev.off()
 tiff(here("plots", "TBreduct.tiff"), width = 6, height = 5, units = 'in', res = 150)
 ggplot() +
   geom_line(data = filter(outs, var == "pTBc"), aes(x = time, y = val, colour = type)) +
-  geom_ribbon(data = filter(outs, var == "pTBc"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.5) +
-  #scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  geom_ribbon(data = filter(outs, var == "pTBc"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,1,0.1), limits = c(0,1), expand = c(0,0)) +
   scale_x_continuous(breaks = seq(min(acf_year),2050,5), limits = c(min(acf_year),2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(min(acf_year),2050)) + 
@@ -386,9 +381,8 @@ tiff(here("plots", "Prop_urbvrur.tiff"), width = 6, height = 5, units = 'in', re
 ggplot(data = outs) +
   geom_line(data = filter(outs, var == "URt"), aes(x = time, y = val, colour = type)) +
   geom_ribbon(data = filter(outs, var == "URt"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
-  #scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
   scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
@@ -402,9 +396,8 @@ tiff(here("plots", "Prop_lovhi.tiff"), width = 6, height = 5, units = 'in', res 
 ggplot(data = outs) +
   geom_line(data = filter(outs, var == "HLt"), aes(x = time, y = (1-val), colour = type)) +
   geom_ribbon(data = filter(outs, var == "HLt"), aes(x = time, ymin = (1-lo), ymax = (1-hi), fill = type), alpha = 0.2) +
-  #scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
   scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
@@ -418,9 +411,8 @@ tiff(here("plots", "Prop_UH.tiff"), width = 6, height = 5, units = 'in', res = 1
 ggplot(data = outs) +
   geom_line(data = filter(outs, var == "pPUH"), aes(x = time, y = val, colour = type)) +
   geom_ribbon(data = filter(outs, var == "pPUH"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
-  #scale_color_manual(values = c("#CE2931", "#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
   scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
@@ -434,9 +426,8 @@ tiff(here("plots", "Prop_RH.tiff"), width = 6, height = 5, units = 'in', res = 1
 ggplot(data = outs) +
   geom_line(data = filter(outs, var == "pPRH"), aes(x = time, y = val, colour = type)) +
   geom_ribbon(data = filter(outs, var == "pPRH"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
-  #scale_color_manual(values = c("#CE2931", "#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
   scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
@@ -450,9 +441,8 @@ tiff(here("plots", "Prop_UL.tiff"), width = 6, height = 5, units = 'in', res = 1
 ggplot(data = outs) +
   geom_line(data = filter(outs, var == "pPUL"), aes(x = time, y = val, colour = type)) +
   geom_ribbon(data = filter(outs, var == "pPUL"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
-  #scale_color_manual(values = c("#CE2931", "#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
   scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
@@ -466,9 +456,8 @@ tiff(here("plots", "Prop_RL.tiff"), width = 6, height = 5, units = 'in', res = 1
 ggplot(data = outs) +
   geom_line(data = filter(outs, var == "pPRL"), aes(x = time, y = val, colour = type)) +
   geom_ribbon(data = filter(outs, var == "pPRL"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
-  #scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
   scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
@@ -512,9 +501,8 @@ tiff(here("plots", "TBdeathsavert.tiff"), width = 6, height = 5, units = 'in', r
 ggplot() +
   geom_line(data = filter(outs, var == "dcumMor"), aes(x = time, y = abs(val), colour = type)) +
   geom_ribbon(data = filter(outs, var == "dcumMor"), aes(x = time, ymin = abs(lo), ymax = abs(hi), fill = type), alpha = 0.2) +
-  #scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-6, suffix = "K")) +
   scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
@@ -530,9 +518,8 @@ tiff(here("plots", "Falsepos.tiff"), width = 6, height = 5, units = 'in', res = 
 ggplot() +
   geom_line(data = filter(outs, var == "FPnds"), aes(x = time, y = val, colour = type)) +
   geom_ribbon(data = filter(outs, var == "FPnds"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
-  #scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-6, suffix = "K")) +
   scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
@@ -548,9 +535,8 @@ tiff(here("plots", "Falsepos.tiff"), width = 6, height = 5, units = 'in', res = 
 ggplot() +
   geom_line(data = filter(outs, var == "FPnds"), aes(x = time, y = val, colour = type)) +
   geom_ribbon(data = filter(outs, var == "FPnds"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
-  #scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-6, suffix = "K")) +
   scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
@@ -566,9 +552,8 @@ tiff(here("plots", "CumFalsepos.tiff"), width = 6, height = 5, units = 'in', res
 ggplot() +
   geom_line(data = filter(outs, var == "cumFPnds"), aes(x = time, y = val, colour = type)) +
   geom_ribbon(data = filter(outs, var == "cumFPnds"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
-  #scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-9, suffix = "M")) +
   scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
@@ -584,9 +569,8 @@ tiff(here("plots", "NumScreen.tiff"), width = 6, height = 5, units = 'in', res =
 ggplot() +
   geom_line(data = filter(outs, var == "cumNumSC"), aes(x = time, y = val, colour = type)) +
   geom_ribbon(data = filter(outs, var == "cumNumSC"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
-  #scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_color_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_fill_manual(values = c("#CE2931","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-9, suffix = "M")) +
   scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
