@@ -43,8 +43,8 @@ a = ggplot(subset(results, var == "TBc" & time %in% from_to), aes(x=time)) +
   geom_ribbon(aes(ymin=`2.5%`, ymax= `97.5%`), fill = colour_line, alpha=alpha) +
   geom_errorbar(data = subset(targets, var == "TBc"), aes(ymin = lo, ymax = hi), size = line_thickness, width = error_bar_width) + 
   scale_x_continuous(breaks = breaks, limits = limits, expand = c(0, 0)) +
-  scale_y_continuous(breaks = seq(0, 300, 50), expand = c(0, 0)) +
-  coord_cartesian(ylim = c(0,300)) +
+  scale_y_continuous(breaks = seq(0, 350, 50), expand = c(0, 0)) +
+  coord_cartesian(ylim = c(0,350)) +
   labs(title = "",
        x = "Year",
        y = "TB prevalence rate") +
@@ -93,8 +93,8 @@ c = ggplot(subset(results, var == "Mor" & time %in% from_to), aes(x=time)) +
   geom_ribbon(aes(ymin=`2.5%`, ymax= `97.5%`), fill = colour_line, alpha=alpha) +
   geom_errorbar(data = subset(targets, var == "Mor"), aes(ymin = lo, ymax = hi), size = line_thickness, width = error_bar_width) +
   scale_x_continuous(breaks = breaks, limits = limits, expand = c(0, 0)) +
-  scale_y_continuous(breaks = seq(0, 60, 5), expand = c(0, 0)) +
-  coord_cartesian(ylim = c(0,60)) +
+  scale_y_continuous(breaks = seq(0, 90, 10), expand = c(0, 0)) +
+  coord_cartesian(ylim = c(0,90)) +
   labs(title = "",
        x = "Year",
        y = "TB mortality rate") +
@@ -241,6 +241,6 @@ h = ggplot(subset(results, var == "HLc" & time %in% from_to), aes(x=time)) +
 plot = (a|b|c|d)/(e|f|g|h)
 aspect_ratio = 2
 
-tiff(here("outputs", "plot.tiff"),  width = 14, height = 10, units = 'in', res = 100)
+tiff(here("outputs", "plot.tiff"),  width = 14, height = 10, units = 'in', res = 200)
 print(plot)
 dev.off()

@@ -45,7 +45,7 @@ parms = c(
 
 # 1.2 Parameter ranges
 ranges = list(
-  beta = c(0,20),                 # Contact (per person/year) parameter (Horton et al. 2022 - PLOS GPH)
+  beta = c(6,20),                 # Contact (per person/year) parameter (Horton et al. 2022 - PLOS GPH)
   kappa = c(0.5,1),               # Relative infectiousness (Emery et al. 2022)
   gamma_infcle = c(0.93,3.30),    # REG: Infected -> Cleared (Horton et al. 2023)
   lambda_infmin = c(0.04,0.23),   # PROG: Infected -> Minimal (Horton et al. 2023)
@@ -248,7 +248,7 @@ target_check <- function(wave = NULL, nwave = w, targets = targetsdb){
 }
 
 # 3.3.2 Target subset function
-target_subset <- function(wave = NULL, nwave = w, sens = 0, targets = targetsdb, parms = parms){
+target_subset <- function(wave = NULL, sens = 0, targets = targetsdb, parms = parms){
   # Prepare dataframes
   wave <- as.data.frame(wave)
   target <- rownames(targets)
@@ -268,19 +268,21 @@ target_subset <- function(wave = NULL, nwave = w, sens = 0, targets = targetsdb,
   targetchecks <- as.data.frame(rowSums(targetchecks))
   colnames(targetchecks)[length(targetchecks)] <- "check"
   wave_check <- cbind(wave,targetchecks)
-  wave_check <- wave_check[wave_check$check >= (length(target)-0),]
+  wave_check <- wave_check[wave_check$check >= (length(target)-sens),]
   wave_check <- wave_check[,1:length(wave_check)-1]
   return(wave_check)
 }
 
 # 3.4 HMER initial run
-ems <- list() # Empty list for emulators per wave
+wave_res <- list() # Empty list for wave results
 wave <- list() # Empty list for data used to train and validate per wave
+simulator <- list() # Empty list for simulator plots
 checks <- list() # Empty list for target checks
+wave_check <- list() # Empty list for wave checks
 wave_train <- list() # Empty list for wave training
 wave_val <- list() # Empty list for wave validation
-wave_res <- list() # Empty list for wave results
-wave_check <- list() # Empty list for wave checks
+ems <- list() # Empty list for emulators per wave
+activeparms <- list() # Empty list for active parameters plots
 invalid_pts <- list() # Empty list for invalid parameter sets
 invalid_diag <- list() # Empty list for invalid parameter sets after diagnostics
 invalid_bad <- list() # Empty list for invalid parameter sets after diagnostics and removal of bad emulators
@@ -300,10 +302,13 @@ for (i in seq_len(nrow(ini_pts))) {
   pb$tick()  # Advance the progress bar
 }
 wave_res[[1]] <- do.call(rbind, tmp)
+export(wave_res[[1]], here("outputs", "wave_res", "w1_waveres.Rdata"))
 wave[[1]] <- cbind(ini_pts, wave_res[[1]]) # Bind run points and results
+export(wave[[1]], here("outputs", "waves", "w1_wave.Rdata"))
 rm(pb, tmp, res, i) # Clean objects
-print(pdf(here("outputs","simulator","w1_simulator.pdf")))
-simulator_plot(wave_res, targets, normalize = TRUE, byhit = TRUE)
+simulator[[1]] <- simulator_plot(wave_res, targets, normalize = TRUE, byhit = TRUE)
+pdf(here("outputs", "simulator", "w1_simulator.pdf"))
+print(simulator[[1]])
 dev.off()
 cat("Model runs completed\n")
 
@@ -319,8 +324,9 @@ wave_train[[1]] <- wave[[1]][sample,]
 wave_val[[1]] <- wave[[1]][-sample,]
 rm(sample)
 ems[[1]] <- emulator_from_data(wave_train[[1]], names(targets), ranges)
-print(pdf(here("outputs", "activeparms", "w1_activeparms.pdf")))
-plot_actives(ems[[1]])
+activeparms[[1]] <- plot_actives(ems[[1]])
+pdf(here("outputs", "activeparms", "w1_activeparms.pdf"))
+print(activeparms[[1]])
 dev.off()
 cat("Emulators trained\n")
 
@@ -350,6 +356,7 @@ cat(names(ems[[1]]),"\n")
 pdf(here("outputs", "diagnostics", "w1_diagnostics_post_badems.pdf"))
 invalid_bad[[1]] <- validation_diagnostics(ems[[1]], validation = wave_val[[1]], targets = targets, plt = TRUE)
 dev.off()
+export(ems[[1]], here("outputs", "ems", "w1_ems.Rdata"))
 cat("Diagnostics performed\n")
 
 non_imp_pts[[1]] <- generate_new_design(ems[[1]], (10*length(ranges))*2, targets, verbose = TRUE) # Generate new points
@@ -358,7 +365,7 @@ cat("New parameter points generated\n")
 beepr::beep(2)
 
 # 3.5 HMER loop runs
-for (i in 13:40){
+for (i in 41:100){
 w <- i # Update wave run
 tic()
 cat("Running wave:", w, "\n")
@@ -371,10 +378,13 @@ for (i in seq_len(nrow(non_imp_pts[[w-1]]))) {
   pb$tick()  # Advance progress bar
 }
 wave_res[[w]] <- do.call(rbind, tmp)
+export(wave_res[[w]], here("outputs", "wave_res", paste("w", w, "_waveres.Rdata", sep = "")))
 wave[[w]] <- cbind(non_imp_pts[[w-1]], wave_res[[w]])
+export(wave[[w]], here("outputs", "waves", paste("w", w, "_wave.Rdata", sep = "")))
 rm(pb, tmp, res, i) # Clean objects
+simulator[[w]] <- simulator_plot(wave_res[w], targets, normalize = TRUE, byhit = TRUE)
 pdf(here("outputs", "simulator", paste("w", w, "_simulator.pdf", sep = "")))
-simulator_plot(wave_res[w], targets, normalize = TRUE, byhit = TRUE)
+print(simulator[[w]])
 dev.off()
 cat("Model runs completed\n")
 
@@ -391,8 +401,9 @@ wave_train[[w]] <- wave[[w]][sample,]
 wave_val[[w]] <- wave[[w]][-sample,]
 rm(sample)
 ems[[w]] <- emulator_from_data(wave_train[[w]], names(targets), ranges, check.ranges = TRUE)
+activeparms[[w]] <- plot_actives(ems[[w]])
 pdf(here("outputs", "activeparms", paste("w", w, "_activeparms.pdf", sep = "")))
-plot_actives(ems[[w]])
+print(activeparms[[w]])
 dev.off()
 cat("Emulators trained\n")
 
@@ -441,6 +452,14 @@ for (file in data_files) {
   non_imp_pts[[num]] <- data
 }
 
+# Waves_res
+data_files <- list.files(here("outputs","wave_res"), pattern = "w[0-9]+_waveres.Rdata", full.names = TRUE)
+for (file in data_files) {
+  num <- as.integer(gsub("[^0-9]", "", basename(file)))
+  data <- import(file)
+  wave_res[[num]] <- data
+}
+
 # Waves
 data_files <- list.files(here("outputs","waves"), pattern = "w[0-9]+_wave.Rdata", full.names = TRUE)
 for (file in data_files) {
@@ -450,11 +469,11 @@ for (file in data_files) {
 }
 
 # 4. Results ==========
-pts_fin <- non_imp_pts[[w]]
-
 # Isolate best parameter sets
 plaus_pts <- as.data.frame(do.call("rbind", wave_check))[1:length(parms)]
-export(plaus_pts,here("outputs", "pts", "plaus_pts.Rdata")) # Save data frame
+export(plaus_pts, here("outputs", "pts", "fitpts.Rdata")) # Save data frame
+
+pts_fin <- plaus_pts
 
 quants <- c(0.025,0.5,0.975) # Set quantiles
 parameters <- apply(pts_fin, 2, quantile, probs = quants, na.rm = TRUE) # Set parameter quantiles
