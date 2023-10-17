@@ -13,7 +13,7 @@ library(data.table) # Faster than data.frame
 library(progress) # Displays progress bar
 
 # 1. Load data ==========
-parms <- import(here("outputs","pts","plaus_pts.Rdata")) # Fitted parameters
+parms <- import(here("outputs", "pts","fitpts.Rdata")) # Fitted parameters
 WPP <- import(here("data","pop","WPP.Rdata")) # Population data
 
 # 3. Model ==========
