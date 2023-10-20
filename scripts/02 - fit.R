@@ -23,7 +23,7 @@ parms = c(
   kappa = 0.75,         # Relative infectiousness
   gamma_infcle = 1.83,  # REG: Infected -> Cleared
   lambda_infmin = 0.21, # PROG: Infected -> Minimal
-  gamma_mincle = 0.16,  # REG: Minimal -> Recovered
+  gamma_minrec = 0.16,  # REG: Minimal -> Recovered
   theta_cleinf = 0.88,  # REINF: Cleared -> Infected
   lambda_minsub = 0.25, # PROG: Minimal -> Subclinical
   lambda_infsub = 0.07, # PROG: Infected -> Subclinical
@@ -49,7 +49,7 @@ ranges = list(
   kappa = c(0.5,1),               # Relative infectiousness (Emery et al. 2022)
   gamma_infcle = c(0.93,3.30),    # REG: Infected -> Cleared (Horton et al. 2023)
   lambda_infmin = c(0.04,0.23),   # PROG: Infected -> Minimal (Horton et al. 2023)
-  gamma_mincle = c(0.14,0.23),    # REG: Minimal -> Recovered (Horton et al. 2023)
+  gamma_minrec = c(0.14,0.23),    # REG: Minimal -> Recovered (Horton et al. 2023)
   theta_cleinf = c(0.7,1),        # REINF: Cleared -> Infected (Andrews et al 2012)
   lambda_minsub = c(0.21,0.28),   # PROG: Minimal -> Subclinical (Horton et al. 2023)
   lambda_infsub = c(0.01,0.10),   # PROG: Infected -> Subclinical (Horton et al. 2023)
@@ -104,8 +104,8 @@ ode <- function(parms, end_time = 2020) {
       dN_RL  = force_func_rhoR(time)*force_func_sigmaL(time)*(mu*N + force_func_omega(time)*(C_RL+C_RH+C_UL+C_UH)) - ((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*N_RL - mu*N_RL
       dI_RL  = (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_RL+(W_RL*theta_cleinf)+(O_RL*theta_recinf)+(P_RL*theta_treinf))) - gamma_infcle*I_RL - lambda_infmin*I_RL - lambda_infsub*I_RL - mu*I_RL
       dW_RL  = gamma_infcle*I_RL - (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*W_RL*theta_cleinf) - mu*W_RL
-      dO_RL  = gamma_mincle*M_RL - (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_RL*theta_recinf) - mu*O_RL
-      dM_RL  = lambda_infmin*I_RL + gamma_submin*S_RL - gamma_mincle*M_RL - lambda_minsub*M_RL + tau_min*P_RL - mu*M_RL
+      dO_RL  = gamma_minrec*M_RL - (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_RL*theta_recinf) - mu*O_RL
+      dM_RL  = lambda_infmin*I_RL + gamma_submin*S_RL - gamma_minrec*M_RL - lambda_minsub*M_RL + tau_min*P_RL - mu*M_RL
       dS_RL  = lambda_infsub*I_RL + lambda_minsub*M_RL + gamma_clnsub*C_RL - gamma_submin*S_RL - lambda_subcln*S_RL + tau_sub*P_RL - mu*S_RL
       dC_RL  = lambda_subcln*S_RL - gamma_clnsub*C_RL - force_func_omega(time)*C_RL - mu*C_RL - force_func_iota(time)*C_RL + force_func_phi(time)*RC_RL
       dRC_RL = force_func_iota(time)*C_RL - force_func_phi(time)*RC_RL - delta*RC_RL - mu*RC_RL
@@ -114,8 +114,8 @@ ode <- function(parms, end_time = 2020) {
       dN_RH  = force_func_rhoR(time)*force_func_sigmaH(time)*(mu*N + force_func_omega(time)*(C_RL+C_RH+C_UL+C_UH)) - ((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*N_RH - mu*N_RH
       dI_RH  = (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_RH+(W_RH*theta_cleinf)+(O_RH*theta_recinf)+(P_RH*theta_treinf))) - gamma_infcle*I_RH - lambda_infmin*I_RH - lambda_infsub*I_RH - mu*I_RH
       dW_RH  = gamma_infcle*I_RH - (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*W_RH*theta_cleinf) - mu*W_RH
-      dO_RH  = gamma_mincle*M_RH - (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_RH*theta_recinf) - mu*O_RH
-      dM_RH  = lambda_infmin*I_RH + gamma_submin*S_RH - gamma_mincle*M_RH - lambda_minsub*M_RH + tau_min*P_RH - mu*M_RH
+      dO_RH  = gamma_minrec*M_RH - (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_RH*theta_recinf) - mu*O_RH
+      dM_RH  = lambda_infmin*I_RH + gamma_submin*S_RH - gamma_minrec*M_RH - lambda_minsub*M_RH + tau_min*P_RH - mu*M_RH
       dS_RH  = lambda_infsub*I_RH + lambda_minsub*M_RH + gamma_clnsub*C_RH - gamma_submin*S_RH - lambda_subcln*S_RH + tau_sub*P_RH - mu*S_RH
       dC_RH  = lambda_subcln*S_RH - gamma_clnsub*C_RH - force_func_omega(time)*C_RH - mu*C_RH - force_func_iota(time)*C_RH + force_func_phi(time)*RC_RH
       dRC_RH = force_func_iota(time)*C_RH - force_func_phi(time)*RC_RH - delta*RC_RH - mu*RC_RH
@@ -124,8 +124,8 @@ ode <- function(parms, end_time = 2020) {
       dN_UL  = force_func_rhoU(time)*force_func_sigmaL(time)*(mu*N + force_func_omega(time)*(C_RL+C_RH+C_UL+C_UH)) - ((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*N_UL - mu*N_UL
       dI_UL  = (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_UL+(W_UL*theta_cleinf)+(O_UL*theta_recinf)+(P_UL*theta_treinf))) - gamma_infcle*I_UL - lambda_infmin*I_UL - lambda_infsub*I_UL - mu*I_UL
       dW_UL  = gamma_infcle*I_UL - (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*W_UL*theta_cleinf) - mu*W_UL
-      dO_UL  = gamma_mincle*M_UL - (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_UL*theta_recinf) - mu*O_UL
-      dM_UL  = lambda_infmin*I_UL + gamma_submin*S_UL - gamma_mincle*M_UL - lambda_minsub*M_UL + tau_min*P_UL - mu*M_UL
+      dO_UL  = gamma_minrec*M_UL - (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_UL*theta_recinf) - mu*O_UL
+      dM_UL  = lambda_infmin*I_UL + gamma_submin*S_UL - gamma_minrec*M_UL - lambda_minsub*M_UL + tau_min*P_UL - mu*M_UL
       dS_UL  = lambda_infsub*I_UL + lambda_minsub*M_UL + gamma_clnsub*C_UL - gamma_submin*S_UL - lambda_subcln*S_UL + tau_sub*P_UL - mu*S_UL
       dC_UL  = lambda_subcln*S_UL - gamma_clnsub*C_UL - force_func_omega(time)*C_UL - mu*C_UL - force_func_iota(time)*C_UL + force_func_phi(time)*RC_UL
       dRC_UL = force_func_iota(time)*C_UL - force_func_phi(time)*RC_UL - delta*RC_UL - mu*RC_UL
@@ -134,8 +134,8 @@ ode <- function(parms, end_time = 2020) {
       dN_UH  = force_func_rhoU(time)*force_func_sigmaH(time)*(mu*N + force_func_omega(time)*(C_RL+C_RH+C_UL+C_UH)) - ((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*N_UH - mu*N_UH
       dI_UH  = (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*(N_UH+(W_UH*theta_cleinf)+(O_UH*theta_recinf)+(P_UH*theta_treinf))) - gamma_infcle*I_UH - lambda_infmin*I_UH - lambda_infsub*I_UH - mu*I_UH
       dW_UH  = gamma_infcle*I_UH - (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*W_UH*theta_cleinf) - mu*W_UH
-      dO_UH  = gamma_mincle*M_UH - (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_UH*theta_recinf) - mu*O_UH
-      dM_UH  = lambda_infmin*I_UH + gamma_submin*S_UH - gamma_mincle*M_UH - lambda_minsub*M_UH + tau_min*P_UH - mu*M_UH
+      dO_UH  = gamma_minrec*M_UH - (((beta/N)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH)))*O_UH*theta_recinf) - mu*O_UH
+      dM_UH  = lambda_infmin*I_UH + gamma_submin*S_UH - gamma_minrec*M_UH - lambda_minsub*M_UH + tau_min*P_UH - mu*M_UH
       dS_UH  = lambda_infsub*I_UH + lambda_minsub*M_UH + gamma_clnsub*C_UH - gamma_submin*S_UH - lambda_subcln*S_UH + tau_sub*P_UH - mu*S_UH
       dC_UH  = lambda_subcln*S_UH - gamma_clnsub*C_UH - force_func_omega(time)*C_UH - mu*C_UH - force_func_iota(time)*C_UH + force_func_phi(time)*RC_UH
       dRC_UH = force_func_iota(time)*C_UH - force_func_phi(time)*RC_UH - delta*RC_UH - mu*RC_UH
@@ -483,13 +483,13 @@ rownames(t_parameters) = colnames(parameters) # Set row names
 parameters <- t_parameters # Rename parameters
 rm(t_parameters) # Clean objects
 
-parameters$parameter <- c("beta","kappa","gamma_infcle","lambda_infmin","gamma_mincle","theta_cleinf",
+parameters$parameter <- c("beta","kappa","gamma_infcle","lambda_infmin","gamma_minrec","theta_cleinf",
                           "lambda_minsub","lambda_infsub","gamma_submin","lambda_subcln","gamma_clnsub",
                           "omega_ini","omega_fin", "iota_cln_ini", "iota_cln_fin", "phi_cln_ini", "phi_cln_fin",
                           "tau_min","tau_sub","rho_ini","rho_fin","sigma_ini","sigma_fin")
-parameters[,c(1,2,3)] <- round(parameters[,c(1,2,3)],2) # Round to 2 decimal places
+parameters[,c(1,2,3)] <- round(parameters[,c(1,2,3)],3) # Round to 2 decimal places
 table <- data.frame(parameter = parameters$parameter, low  = parameters$`2.5%`, med = parameters$`50%`, hig = parameters$`97.5%`) # Output table
-export(table,here("data","parameters.Rdata")) # Save data frame
+export(table, here("data","parameters.Rdata")) # Save data frame
 
 results <- as.data.frame(apply(pts_fin, 1, ode))[-seq(1,521),] # Runs ODE for each set of points
 results <- as.data.frame(t(apply(results, 1, quantile, probs = quants, na.rm = TRUE))) # Set parameter quantiles
