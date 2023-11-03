@@ -1,6 +1,6 @@
 ## Analysis code for ACF-VN
 ## Distributed under CC BY 4.0
-## RScript 05: Strategies.R
+## RScript 05: Scenarios.R
 
 # Packages ==========
 library(rio) # Facilitates importing and exporting
@@ -13,7 +13,7 @@ library(progress) # Displays progress bar
 
 # 1. Load data ==========
 parms <- import(here("outputs","pts","fitpts.Rdata"))
-parms <- parms %>% sample_n(nrow(parms)/80)
+parms <- parms %>% sample_n(nrow(parms)/40)
 WPP <- import(here("data","pop","WPP.Rdata"))
 WUP <- import(here("data","pop","WUP.Rdata"))
 GDP <- import(here("data","pop","GDP.Rdata"))
@@ -26,18 +26,27 @@ parms <- parms %>%
   rename(omega = omega_fin, iota_cln = iota_cln_fin, phi_cln = phi_cln_fin, gamma_minrec = gamma_mincle) 
 
 # 2.2 Intervention parameters
-acf_year <- seq(2025,2028,1)
+acf_year <- seq(2025,2039,1)
 
 prop_target <- 1 # Proportion of population targeted for ACF
 prop_reached <- 1 # Proportion of population participating in ACF
 
 # 2.3 Xpert
-xpert_fp_sic <- c(val = 0.01, lo = 0.01, hi = 0.03)
-xpert_fp_rec <- c(val = 0.01, lo = 0.01, hi = 0.03)
-xpert_sens_min <- c(val = 0.01, lo = 0.01, hi = 0.03)
-xpert_sens_sub <- c(val = 0.69, lo = 0.48, hi = 0.86)
-xpert_sens_cln <- c(val = 0.85, lo = 0.79, hi = 0.90)
-xpert_fp_tre <- c(val = 0.03, lo = 0.01, hi = 0.08)
+# 2.3.1 MTB/RIF
+# xpert_fp_sic <- c(val = 0.01, lo = 0.01, hi = 0.03)
+# xpert_fp_rec <- c(val = 0.01, lo = 0.01, hi = 0.03)
+# xpert_sens_min <- c(val = 0.01, lo = 0.01, hi = 0.03)
+# xpert_sens_sub <- c(val = 0.69, lo = 0.48, hi = 0.86)
+# xpert_sens_cln <- c(val = 0.85, lo = 0.79, hi = 0.90)
+# xpert_fp_tre <- c(val = 0.03, lo = 0.01, hi = 0.08)
+
+# 2.3.2 Ultra
+xpert_fp_sic <- c(val = 0.04, lo = 0.03, hi = 0.07)
+xpert_fp_rec <- c(val = 0.04, lo = 0.03, hi = 0.07)
+xpert_sens_min <- c(val = 0.04, lo = 0.03, hi = 0.07)
+xpert_sens_sub <- c(val = 0.78, lo = 0.68, hi = 0.86)
+xpert_sens_cln <- c(val = 0.91, lo = 0.86, hi = 0.95)
+xpert_fp_tre <- c(val = 0.12, lo = 0.03, hi = 0.30)
 
 # 2.4 Chest X-ray
 cxr_fp_sic <- c(val = 0.085, lo = 0.069, hi = 0.134)
@@ -88,7 +97,7 @@ sigH <- approxfun(GDP$year, (1-GDP$lowses), method = 'linear', rule = 2)
 # 3. Models ==========
 ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
   
-  times <- seq(2020, end_time, by = 1)
+  times <- seq(2020, end_time, by = 1/12)
   
   # Intervention parameters
   if(is.null(interv)){
@@ -99,12 +108,12 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
     alpha_cln <- 0
     alpha_tre <- 0
   } else { 
-    alpha_sic <- interv[interv$parameter == 'alpha_sic', 'val']
-    alpha_rec <- interv[interv$parameter == 'alpha_rec', 'val']
-    alpha_min <- interv[interv$parameter == 'alpha_min', 'val']
-    alpha_sub <- interv[interv$parameter == 'alpha_sub', 'val']
-    alpha_cln <- interv[interv$parameter == 'alpha_cln', 'val']
-    alpha_tre <- interv[interv$parameter == 'alpha_tre', 'val']
+    alpha_sic <- runif(1, min = interv[interv$parameter == 'alpha_sic', 'lo'], max = interv[interv$parameter == 'alpha_sic', 'hi'])
+    alpha_rec <- runif(1, min = interv[interv$parameter == 'alpha_rec', 'lo'], max = interv[interv$parameter == 'alpha_rec', 'hi'])
+    alpha_min <- runif(1, min = interv[interv$parameter == 'alpha_min', 'lo'], max = interv[interv$parameter == 'alpha_min', 'hi'])
+    alpha_sub <- runif(1, min = interv[interv$parameter == 'alpha_sub', 'lo'], max = interv[interv$parameter == 'alpha_sub', 'hi'])
+    alpha_cln <- runif(1, min = interv[interv$parameter == 'alpha_cln', 'lo'], max = interv[interv$parameter == 'alpha_cln', 'hi'])
+    alpha_tre <- runif(1, min = interv[interv$parameter == 'alpha_tre', 'lo'], max = interv[interv$parameter == 'alpha_tre', 'hi'])
   }
 
   # Active-case finding switch
@@ -256,8 +265,17 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
         HLs   = (S_RH+S_UH)/(S_RL+S_UL), # Relative high/low SES in scTB
         HLc   = (C_RH+C_UH)/(C_RL+C_UL), # Relative high/low SES in cTB
         HLt   = (S_RH+S_UH+C_RH+C_UH)/(S_RL+S_UL+C_RL+C_UL+S_RH+S_UH+C_RH+C_UH), # Proportion infectious TB in high SES
-        NumSC = ((acf(floor(times)))*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH))+(alpha_tre*(P_RL+P_RH+P_UL+P_UH)))),
-        FPnds = ((acf(floor(times)))*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_tre*(P_RL+P_RH+P_UL+P_UH)))),
+        NumSC = acf(floor(times))*((alpha_sic*(SN_RL+SN_RH+SN_UL+SN_UH+SI_RL+SI_RH+SI_UL+SI_UH+SW_RL+SW_RH+SW_UL+SW_UH))+(alpha_rec*(SO_RL+SO_RH+SO_UL+SO_UH))+(alpha_min*(SM_RL+SM_RH+SM_UL+SM_UH))+(alpha_sub*(SS_RL+SS_RH+SS_UL+SS_UH))+(alpha_cln*(SC_RL+SC_RH+SC_UL+SC_UH))+(alpha_tre*(SP_RL+SP_RH+SP_UL+SP_UH))),
+        FPnds = acf(floor(times))*((alpha_sic*(SN_RL+SN_RH+SN_UL+SN_UH+SI_RL+SI_RH+SI_UL+SI_UH+SW_RL+SW_RH+SW_UL+SW_UH))+(alpha_rec*(SO_RL+SO_RH+SO_UL+SO_UH))+(alpha_tre*(SP_RL+SP_RH+SP_UL+SP_UH))),
+        TPdis = acf(floor(times))*((alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH))),
+        SCmin = acf(floor(times))*alpha_min*(M_RL+M_RH+M_UL+M_UH),
+        SCsub = acf(floor(times))*alpha_sub*(S_RL+S_RH+S_UL+S_UH),
+        SCcln = acf(floor(times))*alpha_cln*(C_RL+C_RH+C_UL+C_UH),
+        DXcln = iota_cln*(C_RL+C_RH+C_UL+C_UH),
+        FNdis = acf(floor(times))*(((1-alpha_min)*(M_RL+M_RH+M_UL+M_UH))+((1-alpha_sub)*(S_RL+S_RH+S_UL+S_UH))+((1-alpha_cln)*(C_RL+C_RH+C_UL+C_UH))),
+        FNmin = acf(floor(times))*((1-alpha_min)*(M_RL+M_RH+M_UL+M_UH)),
+        FNsub = acf(floor(times))*((1-alpha_sub)*(S_RL+S_RH+S_UL+S_UH)),
+        FNcln = acf(floor(times))*((1-alpha_cln)*(C_RL+C_RH+C_UL+C_UH)),
         ARI   = ((beta/PopT)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH))))) # ARI
     })
   }
@@ -312,50 +330,83 @@ for (i in 1:nrow(parms)) {
 }
 
 outbase_df <- do.call(rbind, outbase)
-outacfa_df <- do.call(rbind, outacfa) %>% rename(NumSC = NumSC.val, FPnds = FPnds.val)
-outacfb_df <- do.call(rbind, outacfb) %>% rename(NumSC = NumSC.val, FPnds = FPnds.val)
-outacfc_df <- do.call(rbind, outacfc) %>% rename(NumSC = NumSC.val, FPnds = FPnds.val)
-
-colnames(outbase_df)
-colnames(outacfa_df)
-colnames(outacfb_df)
-colnames(outacfc_df)
+# export(outbase_df, here("outputs","outbase_df.Rdata"))
+outacfa_df <- do.call(rbind, outacfa)
+# export(outacfa_df, here("outputs","outacfa_df.Rdata"))
+outacfb_df <- do.call(rbind, outacfb)
+# export(outacfb_df, here("outputs","outacfb_df.Rdata"))
+outacfc_df <- do.call(rbind, outacfc)
+# export(outacfc_df, here("outputs","outacfc_df.Rdata"))
 
 # 5. Data curation ==========
 outs <- rbind(outbase_df, outacfa_df, outacfb_df, outacfc_df) %>% 
-  arrange(time) %>% 
-  group_by(type) %>% 
-  mutate(cumMor = cumsum(tMor), cumFPnds = cumsum(FPnds), cumNumSC = cumsum(NumSC)) %>% 
-  group_by(time) %>% 
-  mutate(dMor = tMor - tMor[type == 'base'], dcumMor = cumMor - cumMor[type == 'base'],
-         pTBc = TBc/TBc[type == 'base'], pMor = rMor/rMor[type == 'base']) %>% 
-  mutate(pPRur = PRur/Pop, pPUrb = PUrb/Pop, pPHig = PHig/Pop, pPLow = PLow/Pop,
-         pPRL = PRL/Pop, pPRH = PRH/Pop, pPUL = PUL/Pop, pPUH = PUH/Pop) %>% 
+  arrange(type, run, time) %>% 
+  group_by(type, run) %>%
+  mutate(ACF = SCmin+SCsub+SCcln, # Sum of all TB disease screened (Min+Sub+Cln)
+         AllTB = SCmin+SCsub+SCcln+DXcln, # Sum of all TB disease diagnoses (ACF+BAU)
+         AllTx = SCmin+SCsub+SCcln+DXcln+FPnds, # Sum of all diagnoses (ACF+BAU+FP)
+         cumMor = cumsum(tMor), # Cumulative TB mortality
+         cumFPnds = cumsum(FPnds), # Cumulative FP diagnoses
+         cumFNdis = cumsum(FNdis), # Cumulative FN (diagnoses missed)
+         cumNumSC = cumsum(NumSC), # Cumulative screening (ACF+FP)
+         cumDXcln = cumsum(DXcln), # Cumulative BAU diagnoses 
+         pFP = ifelse(FPnds == 0, 0, FPnds/(TPdis+FPnds))) %>% # FP treated (% over confirmed)
+  ungroup() %>% 
+  group_by(run, time) %>% 
+  mutate(dMor = tMor - tMor[type == 'base'], # TB mortality difference to BAU
+         dcumMor = cumMor - cumMor[type == 'base'], # Cumulative TB mortality difference to BAU
+         pTBc = TBc/TBc[type == 'base'], # Proportional reduction TB prevalence to BAU
+         pMor = rMor/rMor[type == 'base'], # Proportional reduction TB mortality to BAU
+         dAllTB = AllTB - AllTB[type == 'base'], # All TB diagnoses difference to BAU
+         dAllTx = AllTx - AllTx[type == 'base'], # All diagnoses (TB+FP) difference to BAU
+         dBAU = cumDXcln - cumDXcln[type == 'base']) %>% # BAU TB diagnoses difference to BAU
+  ungroup() %>% 
+  group_by(type, run) %>% 
+  mutate(cumAllTB = cumsum(dAllTB), cumAllTx = cumsum(dAllTx)) %>% 
+  ungroup() %>% 
+  group_by(run, time) %>% 
+  mutate(NNS = 1/pTBc, # Number needed to screen
+         NNT = 1/pMor) %>% # Number needed to treat to avert a TB death
+  ungroup() %>% 
+  group_by(type, run, time) %>% 
+  mutate(pPRur = PRur/Pop, # Proportion rural
+         pPUrb = PUrb/Pop, # Proportion urban
+         pPHig = PHig/Pop, # Proportion high SES
+         pPLow = PLow/Pop, # Proportion low SES
+         pPRL = PRL/Pop, # Proportion rural - low SES
+         pPRH = PRH/Pop, # Proportion rural - high SES
+         pPUL = PUL/Pop, # Proportion urban - low SES
+         pPUH = PUH/Pop) %>% # Proportion urban - high SES
   pivot_longer(cols = -c(time, type, run), names_to = "var", values_to = "values") %>% 
   group_by(time, type, var) %>% 
-  summarise(val = median(values), lo = quantile(values, 0.025), hi = quantile(values, 0.975))
+  summarise(val = median(values, na.rm = TRUE), 
+            lo = quantile(values, 0.025, na.rm = TRUE), 
+            hi = quantile(values, 0.975, na.rm = TRUE)) %>% 
+  mutate(fill = ifelse(val < 0, "under", "over"))
 
-export(outs, here("outputs","runs.Rdata"))
-outs <- import(here("outputs","runs.Rdata"))
+# export(outs, here("outputs","runs.Rdata"))
+# outs <- import(here("outputs","runs.Rdata"))
 
 # 6. Plots ==========
-prev_targets <- c(50, 25, 10)
+prev_targets <- c(100, 50, 20)
 dis_state <- factor(c("Clinical","Subclinical","Minimal"))
 inf_dis <- c("Clinical", "Subclinical")
 scenarios <- c("01: Xpert", "02: CXR->Xpert", "03: CXR", "Baseline")
+treatments <- c("BAU: Clinical", "ACF: Clinical", "ACF: Minimal", "ACF: Subclinical")
+types <- c("ACF", "BAU")
 type_label <- labeller(type = c("acfa" = "01: Xpert", "acfb" = "02: CXR->Xpert", "acfc" = "03: CXR", "base" = "Baseline"))
 dem_urbrur <- c("Rural", "Urban")
 dem_ses <- c("High","Low")
 
 # TB prevalence per scenarios 
-tiff(here("plots", "TBprev.tiff"), width = 6, height = 5, units = 'in', res = 150)
+#tiff(here("plots", "TBprev.tiff"), width = 6, height = 5, units = 'in', res = 150)
 ggplot() +
   geom_line(data = filter(outs, var == "TBc"), aes(x = time, y = val, colour = type)) +
   geom_ribbon(data = filter(outs, var == "TBc"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
   scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,250,25), limits = c(0,250), expand = c(0,0)) +
-  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
   labs(x = "Year", y = "TB prevalence rate (per 100K)") +
   geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
@@ -363,7 +414,7 @@ ggplot() +
   theme_bw() +
   theme(legend.position = "bottom", legend.direction = "horizontal",
         plot.margin = margin(10,15,5,10,"pt"))
-dev.off()
+#dev.off()
 
 # Proportion reduction of TB prevalence
 tiff(here("plots", "TBreduct.tiff"), width = 6, height = 5, units = 'in', res = 150)
@@ -373,11 +424,12 @@ ggplot() +
   scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,1.01,0.1), limits = c(0,1.01), expand = c(0,0)) +
-  scale_x_continuous(breaks = seq(min(acf_year),2050,5), limits = c(min(acf_year),2050),expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(min(acf_year),2050,5), limits = c(min(acf_year),2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(min(acf_year),2050)) + 
   labs(x = "Year", y = "Proportion reduction of TB prevalence") +
   geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
-  geom_rect(aes(xmin = 2028 - 0.5, xmax = 2028 + 0.5, ymin = 0.24, ymax = 0.43), fill = "#1D2D5F", alpha = 0.2) + 
+  geom_rect(aes(xmin = 2029 - 0.5, xmax = 2029 + 0.5, ymin = 0.210, ymax = 0.498), colour = "#1D2D5F", linetype = 'dashed', alpha = 0.2) + 
+  geom_text(aes(x = 2028.5, y = 0.25, label = "ACT3 reduction", fontface = 'bold'), angle = 90, vjust = -0.5, hjust = 0, size = 3, color = "#1D2D5F") +
   theme_bw() +
   theme(legend.position = "bottom", legend.direction = "horizontal",
         plot.margin = margin(10,15,5,10,"pt"))
@@ -408,9 +460,26 @@ ggplot() +
   scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,20,5), limits = c(0,20), expand = c(0,0)) +
-  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
   labs(x = "Year", y = "TB mortality rate (per 100K)") +
+  geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"))
+dev.off()
+
+# Total TB mortality 
+tiff(here("plots", "totTBmort.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  geom_line(data = filter(outs, var == "tMor"), aes(x = time, y = val, colour = type)) +
+  geom_ribbon(data = filter(outs, var == "tMor"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_y_continuous(breaks = seq(0,15000,2500), expand = c(0,0), labels = scales::label_number(scale = 1e-3, suffix = "K")) +
+  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050), expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "Total TB mortality") +
   geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
   theme_bw() +
   theme(legend.position = "bottom", legend.direction = "horizontal",
@@ -425,9 +494,26 @@ ggplot() +
   scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,1.01,0.1), limits = c(0,1.01), expand = c(0,0)) +
-  scale_x_continuous(breaks = seq(min(acf_year),2050,5), limits = c(min(acf_year),2050),expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(min(acf_year),2050,5), limits = c(min(acf_year),2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(min(acf_year),2050)) + 
   labs(x = "Year", y = "Proportion reduction of TB mortality") +
+  geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"))
+dev.off()
+
+# Cumulative TB deaths averted
+tiff(here("plots", "cumTBdeathsavert.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  geom_line(data = filter(outs, var == "dcumMor"), aes(x = time, y = abs(val), colour = type)) +
+  geom_ribbon(data = filter(outs, var == "dcumMor"), aes(x = time, ymin = abs(lo), ymax = abs(hi), fill = type), alpha = 0.2) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-3, suffix = "K")) +
+  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050), expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "Cumulative TB deaths averted") +
   geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
   theme_bw() +
   theme(legend.position = "bottom", legend.direction = "horizontal",
@@ -437,18 +523,129 @@ dev.off()
 # TB deaths averted
 tiff(here("plots", "TBdeathsavert.tiff"), width = 6, height = 5, units = 'in', res = 150)
 ggplot() +
-  geom_line(data = filter(outs, var == "dcumMor"), aes(x = time, y = abs(val), colour = type)) +
-  geom_ribbon(data = filter(outs, var == "dcumMor"), aes(x = time, ymin = abs(lo), ymax = abs(hi), fill = type), alpha = 0.2) +
+  geom_line(data = filter(outs, var == "dMor"), aes(x = time, y = abs(val), colour = type)) +
+  geom_ribbon(data = filter(outs, var == "dMor"), aes(x = time, ymin = abs(lo), ymax = abs(hi), fill = type), alpha = 0.2) +
   scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-6, suffix = "M")) +
-  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-3, suffix = "K")) +
+  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
-  labs(x = "Year", y = "Cumulative TB deaths averted") +
+  labs(x = "Year", y = "TB deaths averted per year (compared to BAU)") +
   geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
   theme_bw() +
   theme(legend.position = "bottom", legend.direction = "horizontal",
         plot.margin = margin(10,15,5,10,"pt"))
+dev.off()
+
+# TB treatments
+tiff(here("plots", "TBtreatment.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  facet_wrap(~type, scales = 'free_y', labeller = type_label) +
+  geom_line(data = filter(outs, var %in% c("SCmin","SCsub","SCcln","DXcln")), aes(x = time, y = val, colour = var)) +
+  scale_colour_manual(values = c("#000000","#F58B65","#4DC4CB","#FDC75D"), name = NULL, labels = treatments) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-3, suffix = "K")) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "Number of TB treatments") +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"), panel.spacing.x = unit(10, "mm"))
+dev.off()
+
+# TB treatments (BAU vs ACF)
+tiff(here("plots", "TBtreatBAUACF.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  facet_wrap(~type, scales = 'free_y', labeller = type_label) +
+  geom_line(data = filter(outs, var %in% c("DXcln", "ACF")), aes(x = time, y = val, colour = var)) +
+  scale_colour_manual(values = c("#CE2931","#000000"), name = NULL, labels = types) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-3, suffix = "K")) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "Number of TB treatments") +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"), panel.spacing.x = unit(10, "mm"))
+dev.off()
+
+# All TB treatments
+tiff(here("plots", "TBtreatALLTB.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  geom_line(data = filter(outs, var == "AllTB"), aes(x = time, y = val, colour = type)) +
+  geom_ribbon(data = filter(outs, var == "AllTB"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-3, suffix = "K"), limits = c(0, NA)) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050), ylim = c(0, 9e5)) + 
+  labs(x = "Year", y = "Number of TB treatments") +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"), panel.spacing.x = unit(10, "mm"))
+dev.off()
+
+# All treatments (TB+FP)
+tiff(here("plots", "TBtreatALLTx.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  geom_line(data = filter(outs, var == "AllTx"), aes(x = time, y = val, colour = type)) +
+  geom_ribbon(data = filter(outs, var == "AllTx"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-3, suffix = "K"), limits = c(0, NA)) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050), ylim = c(0, 9e5)) + 
+  labs(x = "Year", y = "Number of treatments (including FP)") +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"), panel.spacing.x = unit(10, "mm"))
+dev.off()
+
+# TB treatments averted
+tiff(here("plots", "TBtreatmentaverted.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  facet_wrap(~type, labeller = type_label) +
+  geom_line(data = filter(outs, var == "dAllTB" & type != 'base'), aes(x = time, y = val)) +
+  geom_area(data = filter(outs, var == "dAllTB" & type != 'base'), aes(x = time, y = val, fill = fill), alpha = 0.5) +
+  scale_fill_manual(values = c("over" = "#FF531A", "under" = "#1AC6FF"), name = NULL) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-3, suffix = "K")) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "Number of TB treatments") +
+  theme_bw() +
+  theme(legend.position = "none", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"), panel.spacing.x = unit(10, "mm"))
+dev.off()
+
+# TB treatments averted (considering FP)
+tiff(here("plots", "TBtreatmentaverted_withFP.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  facet_wrap(~type, labeller = type_label) +
+  geom_line(data = filter(outs, var == "dAllTx" & type != 'base'), aes(x = time, y = val)) +
+  geom_area(data = filter(outs, var == "dAllTx" & type != 'base'), aes(x = time, y = val, fill = fill), alpha = 0.5) +
+  scale_fill_manual(values = c("over" = "#FF531A", "under" = "#1AC6FF"), name = NULL) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-3, suffix = "K")) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "Number of TB treatments") +
+  theme_bw() +
+  theme(legend.position = "none", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"), panel.spacing.x = unit(10, "mm"))
+dev.off()
+
+# Cumulative TB treatments averted
+tiff(here("plots", "cumTBtreatmentaverted_line.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  geom_line(data = filter(outs, var == "dBAU"), aes(x = time, y = abs(val), colour = type)) +
+  geom_ribbon(data = filter(outs, var == "dBAU"), aes(x = time, ymin = abs(lo), ymax = abs(hi), fill = type), alpha = 0.2) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-6, suffix = "M")) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "Number of TB treatments averted") +
+  geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"), panel.spacing.x = unit(10, "mm"))
 dev.off()
 
 # Proportion prevalence (urban vs rural)
@@ -459,7 +656,7 @@ ggplot(data = outs) +
   scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
-  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
   labs(x = "Year", y = "Proportion TB urban vs rural") +
   theme_bw() +
@@ -474,7 +671,7 @@ ggplot(data = outs) +
   scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
-  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
   labs(x = "Year", y = "Proportion TB low vs high") +
   theme_bw() +
@@ -489,7 +686,7 @@ ggplot(data = outs) +
   scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
-  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
   labs(x = "Year", y = "Proportion High SES - Urban") +
   theme_bw() +
@@ -504,7 +701,7 @@ ggplot(data = outs) +
   scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
-  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
   labs(x = "Year", y = "Proportion High SES - Rural") +
   theme_bw() +
@@ -519,7 +716,7 @@ ggplot(data = outs) +
   scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
-  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
   labs(x = "Year", y = "Proportion Low SES - Urban") +
   theme_bw() +
@@ -534,7 +731,7 @@ ggplot(data = outs) +
   scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
-  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
   labs(x = "Year", y = "Proportion Low SES - Rural") +
   theme_bw() +
@@ -548,7 +745,7 @@ ggplot(data = outs) +
   geom_area(data = filter(outs, var %in% c("Cpr","Spr")), aes(x = time, y = val, fill = var), position = "fill") +
   scale_fill_manual(values = c("#F58B65","#FDC75D"), name = NULL, labels = inf_dis) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
-  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
   labs(x = "Year", y = "Proportion infectious TB") +
   theme_bw() +
@@ -563,7 +760,7 @@ ggplot(data = outs) +
   geom_area(data = filter(outs, var %in% c("ClnIf","SubIf","MinIf")), aes(x = time, y = val, fill = reorder(var, -val, decreasing = TRUE)), position = "fill") +
   scale_fill_manual(values = c("#F58B65","#FDC75D","#4DC4CB"), name = "State:", labels = dis_state) +
   scale_y_continuous(breaks = seq(0,1,0.25), limits = c(0,1), expand = c(0,0)) +
-  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050),expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
   labs(x = "Year", y = "Proportion disease state") +
   theme_bw() +
@@ -579,7 +776,7 @@ ggplot() +
   scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-6, suffix = "M")) +
-  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
   labs(x = "Year", y = "False positive diagnoses") +
   geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
@@ -595,10 +792,76 @@ ggplot() +
   geom_ribbon(data = filter(outs, var == "cumFPnds"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
   scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  #scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-6, suffix = "M")) +
-  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050),expand = c(0,0)) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-6, suffix = "M")) +
+  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
   labs(x = "Year", y = "Cumulative false positive diagnoses") +
+  geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"))
+dev.off()
+
+# False negatives
+tiff(here("plots", "Falseneg.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  geom_line(data = filter(outs, var == "FNdis"), aes(x = time, y = val, colour = type)) +
+  geom_ribbon(data = filter(outs, var == "FNdis"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-3, suffix = "K")) +
+  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050), expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "False negative diagnoses (Missed diagnoses)") +
+  geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"))
+dev.off()
+
+# Cumulative false negatives
+tiff(here("plots", "CumFalseneg.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  geom_line(data = filter(outs, var == "cumFNdis"), aes(x = time, y = val, colour = type)) +
+  geom_ribbon(data = filter(outs, var == "cumFNdis"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-6, suffix = "M")) +
+  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050), expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "Cumulative false negative diagnoses (Missed diagnoses)") +
+  geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal",
+        plot.margin = margin(10,15,5,10,"pt"))
+dev.off()
+
+# False positive treated
+tiff(here("plots", "FPtreated.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot(data = outs) +
+  geom_line(data = filter(outs, var == "pFP"), aes(x = time, y = val, colour = type)) +
+  geom_ribbon(data = filter(outs, var == "pFP"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_y_continuous(expand = c(0,0), labels = scales::percent_format(scale = 100)) +
+  scale_x_continuous(breaks = seq(2020,2050,10), limits = c(2020,2050), expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "Proportion FP (% of total screened)") +
+  theme_bw() +
+  theme(legend.position = "bottom", legend.direction = "horizontal")
+dev.off()
+
+# Number needed to screen
+tiff(here("plots", "NNS.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  geom_line(data = filter(outs, var == "NNS"), aes(x = time, y = val, colour = type)) +
+  geom_ribbon(data = filter(outs, var == "NNS"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
+  scale_y_continuous(expand = c(0,0)) +
+  scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050), expand = c(0,0)) +
+  coord_cartesian(xlim = c(2020,2050)) + 
+  labs(x = "Year", y = "Number needed to screen") +
   geom_rect(data = data.frame(acf_year), aes(xmin = acf_year, xmax = acf_year + 1, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) +
   theme_bw() +
   theme(legend.position = "bottom", legend.direction = "horizontal",
@@ -612,7 +875,7 @@ ggplot() +
   geom_ribbon(data = filter(outs, var == "cumNumSC"), aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
   scale_color_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
   scale_fill_manual(values = c("#CE2931","#2984CE","#FFBC47","#1D2D5F"), name = NULL, labels = scenarios) +
-  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-9, suffix = "M")) +
+  scale_y_continuous(expand = c(0,0), labels = scales::label_number(scale = 1e-6, suffix = "M")) +
   scale_x_continuous(breaks = seq(2020,2050,5), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2020,2050)) + 
   labs(x = "Year", y = "Cumulative number screened/treated") +
