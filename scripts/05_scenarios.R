@@ -26,7 +26,7 @@ parms <- parms %>%
   rename(omega = omega_fin, iota_cln = iota_cln_fin, phi_cln = phi_cln_fin, gamma_minrec = gamma_mincle) 
 
 # 2.2 Intervention parameters
-acf_year <- seq(2025,2039,1)
+acf_year <- seq(2025,2028,1)
 
 prop_target <- 1 # Proportion of population targeted for ACF
 prop_reached <- 1 # Proportion of population participating in ACF
@@ -93,6 +93,17 @@ rhoU <- approxfun(WUP$year, WUP$urbprop, method = 'linear', rule = 2)
 rhoR <- approxfun(WUP$year, WUP$rurprop, method = 'linear', rule = 2)
 sigL <- approxfun(GDP$year, GDP$lowses, method = 'linear', rule = 2)
 sigH <- approxfun(GDP$year, (1-GDP$lowses), method = 'linear', rule = 2)
+
+# 2.7 Cost data
+screen_pcf_DSTB <- 104 # Passive case-finding DSTB
+screen_pcf_DRTB <- 500 # Passive case-finding DRTB
+
+screen_acf_xpert <- 8 # ACFA: Xpert
+screen_acf_cxrxpert <- 1.7 # ACFB: CXR -> Xpert
+screen_acf_cxr <- 1 # ACFC: CXR
+
+rx_DSTB <- 81 # Treatment DSTB
+rx_DRTB <- 973 # Treatment DRTB
 
 # 3. Models ==========
 ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
