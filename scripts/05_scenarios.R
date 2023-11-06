@@ -105,6 +105,9 @@ screen_acf_cxr <- 1 # ACFC: CXR
 rx_DSTB <- 81 # Treatment DSTB
 rx_DRTB <- 973 # Treatment DRTB
 
+# 2.9 MDR proportion
+mdr <- 0.05 # DR-TB incidence over total incidence (2015-2021)
+
 # 3. Models ==========
 ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
   
