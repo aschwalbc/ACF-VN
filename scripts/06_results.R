@@ -27,63 +27,61 @@ for (i in files) {
 
 rm(list = setdiff(ls(), "runs"))
 
+for (i in 1:length(runs)) {
+  name <- paste0(names(runs)[i], "outs")
+  if (i == 1) {
+    dt <- rbindlist(list(runs[[i]][[1]]))
+  } else {
+    dt <- rbindlist(list(runs[[i]][[1]], runs[[i]][[2]], runs[[i]][[3]]))
+  }
+  assign(name, dt)
+  print(name)
+}
+
+rm(dt, runs, i, name)
+
 # 2. Data curation ==========
-outs <- list()
+df_names <- ls(pattern = "outs")
 
-for (i in 2:length(runs)) {
-  outs[[i]] <- rbind(runs[[1]], runs[[i]][[1]], runs[[i]][[1]], runs[[i]][[1]]) %>% 
-    arrange(type, run, time) %>% 
-    group_by(type, run) %>%
-    mutate(ACF = SCmin+SCsub+SCcln, # Sum of all TB disease screened (Min+Sub+Cln)
-           AllTB = SCmin+SCsub+SCcln+DXcln, # Sum of all TB disease diagnoses (ACF+BAU)
-           AllTx = SCmin+SCsub+SCcln+DXcln+FPnds, # Sum of all diagnoses (ACF+BAU+FP)
-           cumMor = cumsum(tMor), # Cumulative TB mortality
-           cumFPnds = cumsum(FPnds), # Cumulative FP diagnoses
-           cumFNdis = cumsum(FNdis), # Cumulative FN (diagnoses missed)
-           cumNumSC = cumsum(NumSC), # Cumulative screening (ACF+FP)
-           cumDXcln = cumsum(DXcln), # Cumulative BAU diagnoses 
-           pFP = ifelse(FPnds == 0, 0, FPnds/(TPdis+FPnds))) %>% # FP treated (% over confirmed)
-    ungroup() %>% 
-    group_by(run, time) %>% 
-    mutate(dMor = tMor - tMor[type == 'base'], # TB mortality difference to BAU
-           dcumMor = cumMor - cumMor[type == 'base'], # Cumulative TB mortality difference to BAU
-           pTBc = TBc/TBc[type == 'base'], # Proportional reduction TB prevalence to BAU
-           pMor = rMor/rMor[type == 'base'], # Proportional reduction TB mortality to BAU
-           dAllTB = AllTB - AllTB[type == 'base'], # All TB diagnoses difference to BAU
-           dAllTx = AllTx - AllTx[type == 'base'], # All diagnoses (TB+FP) difference to BAU
-           dBAU = cumDXcln - cumDXcln[type == 'base']) %>% # BAU TB diagnoses difference to BAU
-    ungroup() %>% 
-    group_by(type, run) %>% 
-    mutate(cumAllTB = cumsum(dAllTB), cumAllTx = cumsum(dAllTx)) %>% 
-    ungroup() %>% 
-    group_by(run, time) %>% 
-    mutate(NNS = 1/pTBc, # Number needed to screen
-           NNT = 1/pMor) %>% # Number needed to treat to avert a TB death
-    ungroup() %>% 
-    group_by(type, run, time) %>% 
-    mutate(pPRur = PRur/Pop, # Proportion rural
-           pPUrb = PUrb/Pop, # Proportion urban
-           pPHig = PHig/Pop, # Proportion high SES
-           pPLow = PLow/Pop, # Proportion low SES
-           pPRL = PRL/Pop, # Proportion rural - low SES
-           pPRH = PRH/Pop, # Proportion rural - high SES
-           pPUL = PUL/Pop, # Proportion urban - low SES
-           pPUH = PUH/Pop) %>% # Proportion urban - high SES
-    pivot_longer(cols = -c(time, type, run), names_to = "var", values_to = "values") %>% 
-    group_by(time, type, var) %>% 
-    summarise(val = median(values, na.rm = TRUE), 
-              lo = quantile(values, 0.025, na.rm = TRUE), 
-              hi = quantile(values, 0.975, na.rm = TRUE)) %>% 
-    mutate(fill = ifelse(val < 0, "under", "over"))
-}
+outs <- rbindlist(lapply(df_names, function(df_name) {
+  df <- get(df_name)
+  df %>% select(type, run, time, round, Pop, Sub, Cln, TBc, rMor, tMor, FPnds, TPdis)
+}))
 
-r1outs <- rbind(runs[[1]][[1]], runs[[2]][[1]])
+rm(list = setdiff(ls(), "outs"))
 
-for (i in 2:length(runs)) {
-  outs[[i]] <- rbindlist(list(runs[[i]][[1]], runs[[i]][[2]], runs[[i]][[3]]))
-}
+outs_m <- outs %>% 
+  arrange(type, run, time) %>% 
+  group_by(run, time) %>% 
+  mutate(pTBc = TBc/TBc[type == 'base'], # Proportional reduction TB prevalence to BAU
+         dMor = tMor - tMor[type == 'base'], # TB mortality difference to BAU
+         pMor = rMor/rMor[type == 'base']) %>%  # Proportional reduction TB mortality to BAU
+  ungroup() %>% 
+  mutate(redpTBc = 1-pTBc) %>% # Proportional reduction TB mortality to BAU
+  group_by(type, run) %>% 
+  mutate(pFP = ifelse(FPnds == 0, 0, FPnds/(TPdis+FPnds))) %>% 
+  pivot_longer(cols = -c(time, type, run, round), names_to = "var", values_to = "values") %>% 
+  group_by(time, type, var, round) %>% 
+  summarise(val = median(values, na.rm = TRUE), 
+            lo = quantile(values, 0.025, na.rm = TRUE), 
+            hi = quantile(values, 0.975, na.rm = TRUE))
 
-outs <- rbindlist(c(list(runs[[1]][[1]]), outs))
+outs_yr <- outs %>% 
+  arrange(type, run, time) %>% 
+  filter(time == floor(time)) %>% 
+  group_by(type, run, round) %>%
+  mutate(cumMor = cumsum(tMor), # Cumulative TB mortality
+         cumFPnds = cumsum(FPnds), # Cumulative FP diagnoses
+         cumTPdis = cumsum(TPdis)) %>% # Cumulative TP diagnoses
+  ungroup() %>% 
+  group_by(type, run) %>% 
+  mutate(cumpFP = ifelse(cumFPnds == 0, 0, cumFPnds/(cumTPdis+cumFPnds))) %>% 
+  pivot_longer(cols = -c(time, type, run, round), names_to = "var", values_to = "values") %>% 
+  group_by(time, type, var, round) %>% 
+  summarise(val = median(values, na.rm = TRUE), 
+            lo = quantile(values, 0.025, na.rm = TRUE), 
+            hi = quantile(values, 0.975, na.rm = TRUE))
 
-# export(outs, here("outputs","runs.Rdata"))
-# outs <- import(here("outputs","runs.Rdata"))
+export(outs, here("outputs", "outs", "outs.Rdata"))
+export(outs_m, here("outputs", "outs", "outs_m.Rdata"))
+export(outs_yr, here("outputs", "outs", "outs_yr.Rdata"))
