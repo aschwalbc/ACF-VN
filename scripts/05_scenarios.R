@@ -248,7 +248,8 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
         ClnRH = (C_RH/(N_RH+SN_RH+I_RH+SI_RH+W_RH+SW_RH+O_RH+SO_RH+M_RH+SM_RH+S_RH+SS_RH+C_RH+RC_RH+SC_RH+P_RH+SP_RH)*1e5), # Clinical TB Rural - High SES (per 100k)
         ClnUL = (C_UL/(N_UL+SN_UL+I_UL+SI_UL+W_UL+SW_UL+O_UL+SO_UL+M_UL+SM_UL+S_UL+SS_UL+C_UL+RC_UL+SC_UL+P_UL+SP_UL)*1e5), # Clinical TB Urban - Low SES (per 100k)
         ClnUH = (C_UH/(N_UH+SN_UH+I_UH+SI_UH+W_UH+SW_UH+O_UH+SO_UH+M_UH+SM_UH+S_UH+SS_UH+C_UH+RC_UH+SC_UH+P_UH+SP_UH)*1e5), # Clinical TB Urban - High SES (per 100k)
-        TBc   = ((S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH)/PopT*1e5), # Infectious TB (per 100k)
+        rTBc  = ((S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH)/PopT*1e5), # Infectious TB (per 100k)
+        tTBc  = (S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Total infectious TB
         TBcLo = ((S_RL+S_UL+C_RL+C_UL)/(N_RL+SN_RL+I_RL+SI_RL+W_RL+SW_RL+O_RL+SO_RL+M_RL+SM_RL+S_RL+SS_RL+C_RL+RC_RL+SC_RL+P_RL+SP_RL+N_UL+SN_UL+I_UL+SI_UL+W_UL+SW_UL+O_UL+SO_UL+M_UL+SM_UL+S_UL+SS_UL+C_UL+RC_UL+SC_UL+P_UL+SP_UL)*1e5), # Infectious TB in low SES (per 100k)
         TBcHi = ((S_RH+S_UH+C_RH+C_UH)/(N_RH+SN_RH+I_RH+SI_RH+W_RH+SW_RH+O_RH+SO_RH+M_RH+SM_RH+S_RH+SS_RH+C_RH+RC_RH+SC_RH+P_RH+SP_RH+N_UH+SN_UH+I_UH+SI_UH+W_UH+SW_UH+O_UH+SO_UH+M_UH+SM_UH+S_UH+SS_UH+C_UH+RC_UH+SC_UH+P_UH+SP_UH)*1e5), # Infectious TB in high SES (per 100k)
         TBcUr = ((S_UH+S_UL+C_UH+C_UL)/(N_UL+SN_UL+I_UL+SI_UL+W_UL+SW_UL+O_UL+SO_UL+M_UL+SM_UL+S_UL+SS_UL+C_UL+RC_UL+SC_UL+P_UL+SP_UL+N_UH+SN_UH+I_UH+SI_UH+W_UH+SW_UH+O_UH+SO_UH+M_UH+SM_UH+S_UH+SS_UH+C_UH+RC_UH+SC_UH+P_UH+SP_UH)*1e5), # Infectious TB in urban (per 100k)
@@ -325,7 +326,7 @@ for (i in 1:nrow(parms)) {
   pb$tick()
 }
 r00_outbase_df <- do.call(rbind, outbase)
-r00_outbase_df <- r00_outbase_df %>% mutate(round = 00)
+r00_outbase_df <- r00_outbase_df %>% mutate(round = "00")
 export(r00_outbase_df, here("outputs", "results", "r00_base.Rdata"))
 
 # 4.2 Scenarios
@@ -334,7 +335,6 @@ acf_year <- list(
   "02" = seq(2025, 2026, 1),
   "03" = seq(2025, 2027, 1),
   "05" = seq(2025, 2029, 1),
-  "06" = seq(2025, 2030, 1),
   "10" = seq(2025, 2034, 1),
   "12" = seq(2025, 2036, 1))
 
