@@ -13,10 +13,12 @@ library(progress) # Displays progress bar
 
 # 1. Load data ==========
 parms <- import(here("outputs","pts","fitpts.Rdata"))
+parms <- parms %>% sample_frac(0.02)
 WPP <- import(here("data","pop","WPP.Rdata"))
 WUP <- import(here("data","pop","WUP.Rdata"))
 GDP <- import(here("data","pop","GDP.Rdata"))
 base <- import(here("data","state_base.Rdata"))
+DALY <- import(here("data","pop","DALYs.xlsx"))
 
 # 2. Strategies ==========
 # 2.1 Baseline parameters
@@ -96,6 +98,9 @@ screen_acf_cxr <- 1 # ACFC: CXR
 
 rx_DSTB <- 81 # Treatment DSTB
 rx_DRTB <- 973 # Treatment DRTB
+
+# 2.8 DALYs
+daly <- approxfun(DALY$year, DALY$daly_pc, method = 'linear', rule = 2)
 
 # 2.9 MDR proportion
 mdr <- 0.05 # DR-TB incidence over total incidence (2015-2021)
@@ -221,72 +226,25 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
         dM_RL, dM_RH, dM_UL, dM_UH, dSM_RL, dSM_RH, dSM_UL, dSM_UH, dS_RL, dS_RH, dS_UL, dS_UH, dSS_RL, dSS_RH, dSS_UL, dSS_UH, 
         dC_RL, dC_RH, dC_UL, dC_UH, dRC_RL, dRC_RH, dRC_UL, dRC_UH, dSC_RL, dSC_RH, dSC_UL, dSC_UH, 
         dP_RL, dP_RH, dP_UL, dP_UH, dSP_RL, dSP_RH, dSP_UL, dSP_UH),
-        Pop   = PopT, # Total population
-        PRur  = (N_RL+SN_RL+I_RL+SI_RL+W_RL+SW_RL+O_RL+SO_RL+M_RL+SM_RL+S_RL+SS_RL+C_RL+RC_RL+SC_RL+P_RL+SP_RL+N_RH+SN_RH+I_RH+SI_RH+W_RH+SW_RH+O_RH+SO_RH+M_RH+SM_RH+S_RH+SS_RH+C_RH+RC_RH+SC_RH+P_RH+SP_RH), # Population rural
-        PUrb  = (N_UL+SN_UL+I_UL+SI_UL+W_UL+SW_UL+O_UL+SO_UL+M_UL+SM_UL+S_UL+SS_UL+C_UL+RC_UL+SC_UL+P_UL+SP_UL+N_UH+SN_UH+I_UH+SI_UH+W_UH+SW_UH+O_UH+SO_UH+M_UH+SM_UH+S_UH+SS_UH+C_UH+RC_UH+SC_UH+P_UH+SP_UH), # Population urban
-        PHig  = (N_RH+SN_RH+I_RH+SI_RH+W_RH+SW_RH+O_RH+SO_RH+M_RH+SM_RH+S_RH+SS_RH+C_RH+RC_RH+SC_RH+P_RH+SP_RH+N_UH+SN_UH+I_UH+SI_UH+W_UH+SW_UH+O_UH+SO_UH+M_UH+SM_UH+S_UH+SS_UH+C_UH+RC_UH+SC_UH+P_UH+SP_UH), # Population high SES
-        PLow  = (N_RL+SN_RL+I_RL+SI_RL+W_RL+SW_RL+O_RL+SO_RL+M_RL+SM_RL+S_RL+SS_RL+C_RL+RC_RL+SC_RL+P_RL+SP_RL+N_UL+SN_UL+I_UL+SI_UL+W_UL+SW_UL+O_UL+SO_UL+M_UL+SM_UL+S_UL+SS_UL+C_UL+RC_UL+SC_UL+P_UL+SP_UL), # Population low SES
-        PRL   = (N_RL+SN_RL+I_RL+SI_RL+W_RL+SW_RL+O_RL+SO_RL+M_RL+SM_RL+S_RL+SS_RL+C_RL+RC_RL+SC_RL+P_RL+SP_RL), # Population Rural - Low SES
-        PRH   = (N_RH+SN_RH+I_RH+SI_RH+W_RH+SW_RH+O_RH+SO_RH+M_RH+SM_RH+S_RH+SS_RH+C_RH+RC_RH+SC_RH+P_RH+SP_RH), # Population Rural - High SES
-        PUL   = (N_UL+SN_UL+I_UL+SI_UL+W_UL+SW_UL+O_UL+SO_UL+M_UL+SM_UL+S_UL+SS_UL+C_UL+RC_UL+SC_UL+P_UL+SP_UL), # Population Urban - Low SES
-        PUH   = (N_UH+SN_UH+I_UH+SI_UH+W_UH+SW_UH+O_UH+SO_UH+M_UH+SM_UH+S_UH+SS_UH+C_UH+RC_UH+SC_UH+P_UH+SP_UH), # Population Urban - High SES
-        Sub   = ((S_RL+S_RH+S_UL+S_UH)/PopT*1e5), # Subclinical TB (per 100k)
-        SubLo = ((S_RL+S_UL)/(N_RL+SN_RL+I_RL+SI_RL+W_RL+SW_RL+O_RL+SO_RL+M_RL+SM_RL+S_RL+SS_RL+C_RL+RC_RL+SC_RL+P_RL+SP_RL+N_UL+SN_UL+I_UL+SI_UL+W_UL+SW_UL+O_UL+SO_UL+M_UL+SM_UL+S_UL+SS_UL+C_UL+RC_UL+SC_UL+P_UL+SP_UL)*1e5), # Subclinical TB in low SES (per 100k)
-        SubHi = ((S_RH+S_UH)/(N_RH+SN_RH+I_RH+SI_RH+W_RH+SW_RH+O_RH+SO_RH+M_RH+SM_RH+S_RH+SS_RH+C_RH+RC_RH+SC_RH+P_RH+SP_RH+N_UH+SN_UH+I_UH+SI_UH+W_UH+SW_UH+O_UH+SO_UH+M_UH+SM_UH+S_UH+SS_UH+C_UH+RC_UH+SC_UH+P_UH+SP_UH)*1e5), # Subclinical TB in high SES (per 100k)
-        SubUr = ((S_UH+S_UL)/(N_UL+SN_UL+I_UL+SI_UL+W_UL+SW_UL+O_UL+SO_UL+M_UL+SM_UL+S_UL+SS_UL+C_UL+RC_UL+SC_UL+P_UL+SP_UL+N_UH+SN_UH+I_UH+SI_UH+W_UH+SW_UH+O_UH+SO_UH+M_UH+SM_UH+S_UH+SS_UH+C_UH+RC_UH+SC_UH+P_UH+SP_UH)*1e5), # Subclinical TB in urban (per 100k)
-        SubRu = ((S_RH+S_RL)/(N_RL+SN_RL+I_RL+SI_RL+W_RL+SW_RL+O_RL+SO_RL+M_RL+SM_RL+S_RL+SS_RL+C_RL+RC_RL+SC_RL+P_RL+SP_RL+N_RH+SN_RH+I_RH+SI_RH+W_RH+SW_RH+O_RH+SO_RH+M_RH+SM_RH+S_RH+SS_RH+C_RH+RC_RH+SC_RH+P_RH+SP_RH)*1e5), # Subclinical TB in rural (per 100k)
-        SubRL = (S_RL/(N_RL+SN_RL+I_RL+SI_RL+W_RL+SW_RL+O_RL+SO_RL+M_RL+SM_RL+S_RL+SS_RL+C_RL+RC_RL+SC_RL+P_RL+SP_RL)*1e5), # Subclinical TB Rural - Low SES (per 100k)
-        SubRH = (S_RH/(N_RH+SN_RH+I_RH+SI_RH+W_RH+SW_RH+O_RH+SO_RH+M_RH+SM_RH+S_RH+SS_RH+C_RH+RC_RH+SC_RH+P_RH+SP_RH)*1e5), # Subclinical TB Rural - High SES (per 100k)
-        SubUL = (S_UL/(N_UL+SN_UL+I_UL+SI_UL+W_UL+SW_UL+O_UL+SO_UL+M_UL+SM_UL+S_UL+SS_UL+C_UL+RC_UL+SC_UL+P_UL+SP_UL)*1e5), # Subclinical TB Urban - Low SES (per 100k)
-        SubUH = (S_UH/(N_UH+SN_UH+I_UH+SI_UH+W_UH+SW_UH+O_UH+SO_UH+M_UH+SM_UH+S_UH+SS_UH+C_UH+RC_UH+SC_UH+P_UH+SP_UH)*1e5), # Subclinical TB Urban - High SES (per 100k)
-        Cln   = ((C_RL+C_RH+C_UL+C_UH)/PopT*1e5), # Clinical TB (per 100k)
-        ClnLo = ((C_RL+C_UL)/(N_RL+SN_RL+I_RL+SI_RL+W_RL+SW_RL+O_RL+SO_RL+M_RL+SM_RL+S_RL+SS_RL+C_RL+RC_RL+SC_RL+P_RL+SP_RL+N_UL+SN_UL+I_UL+SI_UL+W_UL+SW_UL+O_UL+SO_UL+M_UL+SM_UL+S_UL+SS_UL+C_UL+RC_UL+SC_UL+P_UL+SP_UL)*1e5), # Clinical TB in low SES (per 100k)
-        ClnHi = ((C_RH+C_UH)/(N_RH+SN_RH+I_RH+SI_RH+W_RH+SW_RH+O_RH+SO_RH+M_RH+SM_RH+S_RH+SS_RH+C_RH+RC_RH+SC_RH+P_RH+SP_RH+N_UH+SN_UH+I_UH+SI_UH+W_UH+SW_UH+O_UH+SO_UH+M_UH+SM_UH+S_UH+SS_UH+C_UH+RC_UH+SC_UH+P_UH+SP_UH)*1e5), # Clinical TB in high SES (per 100k)
-        ClnUr = ((C_UH+C_UL)/(N_UL+SN_UL+I_UL+SI_UL+W_UL+SW_UL+O_UL+SO_UL+M_UL+SM_UL+S_UL+SS_UL+C_UL+RC_UL+SC_UL+P_UL+SP_UL+N_UH+SN_UH+I_UH+SI_UH+W_UH+SW_UH+O_UH+SO_UH+M_UH+SM_UH+S_UH+SS_UH+C_UH+RC_UH+SC_UH+P_UH+SP_UH)*1e5), # Clinical TB in urban (per 100k)
-        ClnRu = ((C_RH+C_RL)/(N_RL+SN_RL+I_RL+SI_RL+W_RL+SW_RL+O_RL+SO_RL+M_RL+SM_RL+S_RL+SS_RL+C_RL+RC_RL+SC_RL+P_RL+SP_RL+N_RH+SN_RH+I_RH+SI_RH+W_RH+SW_RH+O_RH+SO_RH+M_RH+SM_RH+S_RH+SS_RH+C_RH+RC_RH+SC_RH+P_RH+SP_RH)*1e5), # Clinical TB in rural (per 100k)
-        ClnRL = (C_RL/(N_RL+SN_RL+I_RL+SI_RL+W_RL+SW_RL+O_RL+SO_RL+M_RL+SM_RL+S_RL+SS_RL+C_RL+RC_RL+SC_RL+P_RL+SP_RL)*1e5), # Clinical TB Rural - Low SES (per 100k)
-        ClnRH = (C_RH/(N_RH+SN_RH+I_RH+SI_RH+W_RH+SW_RH+O_RH+SO_RH+M_RH+SM_RH+S_RH+SS_RH+C_RH+RC_RH+SC_RH+P_RH+SP_RH)*1e5), # Clinical TB Rural - High SES (per 100k)
-        ClnUL = (C_UL/(N_UL+SN_UL+I_UL+SI_UL+W_UL+SW_UL+O_UL+SO_UL+M_UL+SM_UL+S_UL+SS_UL+C_UL+RC_UL+SC_UL+P_UL+SP_UL)*1e5), # Clinical TB Urban - Low SES (per 100k)
-        ClnUH = (C_UH/(N_UH+SN_UH+I_UH+SI_UH+W_UH+SW_UH+O_UH+SO_UH+M_UH+SM_UH+S_UH+SS_UH+C_UH+RC_UH+SC_UH+P_UH+SP_UH)*1e5), # Clinical TB Urban - High SES (per 100k)
+        rMin  = ((M_RL+M_RH+M_UL+M_UH)/PopT*1e5), # Minimal TB (per 100k)
+        tMin  = (M_RL+M_RH+M_UL+M_UH), # Total minimal TB
+        rSub  = ((S_RL+S_RH+S_UL+S_UH)/PopT*1e5), # Subclinical TB (per 100k)
+        tSub  = (S_RL+S_RH+S_UL+S_UH), # Total subclinical TB
+        rCln  = ((C_RL+C_RH+C_UL+C_UH)/PopT*1e5), # Clinical TB (per 100k)
+        tCln  = (C_RL+C_RH+C_UL+C_UH), # Total clinical TB
         rTBc  = ((S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH)/PopT*1e5), # Infectious TB (per 100k)
         tTBc  = (S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Total infectious TB
-        TBcLo = ((S_RL+S_UL+C_RL+C_UL)/(N_RL+SN_RL+I_RL+SI_RL+W_RL+SW_RL+O_RL+SO_RL+M_RL+SM_RL+S_RL+SS_RL+C_RL+RC_RL+SC_RL+P_RL+SP_RL+N_UL+SN_UL+I_UL+SI_UL+W_UL+SW_UL+O_UL+SO_UL+M_UL+SM_UL+S_UL+SS_UL+C_UL+RC_UL+SC_UL+P_UL+SP_UL)*1e5), # Infectious TB in low SES (per 100k)
-        TBcHi = ((S_RH+S_UH+C_RH+C_UH)/(N_RH+SN_RH+I_RH+SI_RH+W_RH+SW_RH+O_RH+SO_RH+M_RH+SM_RH+S_RH+SS_RH+C_RH+RC_RH+SC_RH+P_RH+SP_RH+N_UH+SN_UH+I_UH+SI_UH+W_UH+SW_UH+O_UH+SO_UH+M_UH+SM_UH+S_UH+SS_UH+C_UH+RC_UH+SC_UH+P_UH+SP_UH)*1e5), # Infectious TB in high SES (per 100k)
-        TBcUr = ((S_UH+S_UL+C_UH+C_UL)/(N_UL+SN_UL+I_UL+SI_UL+W_UL+SW_UL+O_UL+SO_UL+M_UL+SM_UL+S_UL+SS_UL+C_UL+RC_UL+SC_UL+P_UL+SP_UL+N_UH+SN_UH+I_UH+SI_UH+W_UH+SW_UH+O_UH+SO_UH+M_UH+SM_UH+S_UH+SS_UH+C_UH+RC_UH+SC_UH+P_UH+SP_UH)*1e5), # Infectious TB in urban (per 100k)
-        TBcRu = ((S_RH+S_RL+C_RH+C_RL)/(N_RL+SN_RL+I_RL+SI_RL+W_RL+SW_RL+O_RL+SO_RL+M_RL+SM_RL+S_RL+SS_RL+C_RL+RC_RL+SC_RL+P_RL+SP_RL+N_RH+SN_RH+I_RH+SI_RH+W_RH+SW_RH+O_RH+SO_RH+M_RH+SM_RH+S_RH+SS_RH+C_RH+RC_RH+SC_RH+P_RH+SP_RH)*1e5), # Infectious TB in rural (per 100k)
-        TBcRL = ((S_RL+C_RL)/(N_RL+SN_RL+I_RL+SI_RL+W_RL+SW_RL+O_RL+SO_RL+M_RL+SM_RL+S_RL+SS_RL+C_RL+RC_RL+SC_RL+P_RL+SP_RL)*1e5), # Infectious TB Rural - Low SES (per 100k)
-        TBcRH = ((S_RH+C_RH)/(N_RH+SN_RH+I_RH+SI_RH+W_RH+SW_RH+O_RH+SO_RH+M_RH+SM_RH+S_RH+SS_RH+C_RH+RC_RH+SC_RH+P_RH+SP_RH)*1e5), # Infectious TB Rural - High SES (per 100k)
-        TBcUL = ((S_UL+C_UL)/(N_UL+SN_UL+I_UL+SI_UL+W_UL+SW_UL+O_UL+SO_UL+M_UL+SM_UL+S_UL+SS_UL+C_UL+RC_UL+SC_UL+P_UL+SP_UL)*1e5), # Infectious TB Urban - Low SES (per 100k)
-        TBcUH = ((S_UH+C_UH)/(N_UH+SN_UH+I_UH+SI_UH+W_UH+SW_UH+O_UH+SO_UH+M_UH+SM_UH+S_UH+SS_UH+C_UH+RC_UH+SC_UH+P_UH+SP_UH)*1e5), # Infectious TB Urban - High SES (per 100k)
-        rMor  = (omega*(C_RL+C_RH+C_UL+C_UH))/PopT*1e5, # Clinical TB mortality per time (per 100k)
+        rMor  = ((omega*(C_RL+C_RH+C_UL+C_UH))/PopT*1e5), # Clinical TB mortality per time (per 100k)
         tMor  = (omega*(C_RL+C_RH+C_UL+C_UH)), # Clinical TB mortality per time
-        Dxs   = (iota_cln*(C_RL+C_RH+C_UL+C_UH))/PopT*1e5, # Notifications cTB per time in adults (per 100k)
-        Spr   = (S_RL+S_RH+S_UL+S_UH)/(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion scTB/infectious TB
-        Cpr   = (C_RL+C_RH+C_UL+C_UH)/(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion cTB/infectious TB
-        MinIf = (M_RL+M_RH+M_UL+M_UH)/(M_RL+M_RH+M_UL+M_UH+S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion minTB
-        SubIf = (S_RL+S_RH+S_UL+S_UH)/(M_RL+M_RH+M_UL+M_UH+S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion scTB
-        ClnIf = (C_RL+C_RH+C_UL+C_UH)/(M_RL+M_RH+M_UL+M_UH+S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Proportion clnTB
-        URs   = (S_UL+S_UH)/(S_RL+S_RH), # Relative urban/rural in scTB
-        URc   = (C_UL+C_UH)/(C_RL+C_RH), # Relative urban/rural in cTB
-        URt   = (S_UL+S_UH+C_UL+C_UH)/(S_UL+S_UH+C_UL+C_UH+S_RL+S_RH+C_RL+C_RH), # Proportion infectious TB in urban
-        HLs   = (S_RH+S_UH)/(S_RL+S_UL), # Relative high/low SES in scTB
-        HLc   = (C_RH+C_UH)/(C_RL+C_UL), # Relative high/low SES in cTB
-        HLt   = (S_RH+S_UH+C_RH+C_UH)/(S_RL+S_UL+C_RL+C_UL+S_RH+S_UH+C_RH+C_UH), # Proportion infectious TB in high SES
-        NumSC = acf(floor(times))*((alpha_sic*(SN_RL+SN_RH+SN_UL+SN_UH+SI_RL+SI_RH+SI_UL+SI_UH+SW_RL+SW_RH+SW_UL+SW_UH))+(alpha_rec*(SO_RL+SO_RH+SO_UL+SO_UH))+(alpha_min*(SM_RL+SM_RH+SM_UL+SM_UH))+(alpha_sub*(SS_RL+SS_RH+SS_UL+SS_UH))+(alpha_cln*(SC_RL+SC_RH+SC_UL+SC_UH))+(alpha_tre*(SP_RL+SP_RH+SP_UL+SP_UH))),
-        FPnds = acf(floor(times))*((alpha_sic*(SN_RL+SN_RH+SN_UL+SN_UH+SI_RL+SI_RH+SI_UL+SI_UH+SW_RL+SW_RH+SW_UL+SW_UH))+(alpha_rec*(SO_RL+SO_RH+SO_UL+SO_UH))+(alpha_tre*(SP_RL+SP_RH+SP_UL+SP_UH))),
-        TPdis = acf(floor(times))*((alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH))),
-        SCmin = acf(floor(times))*alpha_min*(M_RL+M_RH+M_UL+M_UH),
-        SCsub = acf(floor(times))*alpha_sub*(S_RL+S_RH+S_UL+S_UH),
-        SCcln = acf(floor(times))*alpha_cln*(C_RL+C_RH+C_UL+C_UH),
-        DXcln = iota_cln*(C_RL+C_RH+C_UL+C_UH),
+        rDxs  = ((iota_cln*(C_RL+C_RH+C_UL+C_UH))/PopT*1e5), # Notifications cTB per time in adults (per 100k)
+        tDxs  = (iota_cln*(C_RL+C_RH+C_UL+C_UH)), # Total notifications cTB per time in adults
+        dTBc  = daly(times)*(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH),
+        tFPos = acf(floor(times))*((alpha_sic*(SN_RL+SN_RH+SN_UL+SN_UH+SI_RL+SI_RH+SI_UL+SI_UH+SW_RL+SW_RH+SW_UL+SW_UH))+(alpha_rec*(SO_RL+SO_RH+SO_UL+SO_UH))+(alpha_tre*(SP_RL+SP_RH+SP_UL+SP_UH))), # FP diagnosed
+        tTPos = acf(floor(times))*((alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH))), # TP diagnosed
         cPCFS = (((1-mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*screen_pcf_DSTB),
         cPCFR = (((mdr)*((iota_cln)*(RC_RL+RC_RH+RC_UL+RC_UH)))*screen_pcf_DRTB),
         cRxDS = (((1-mdr)*((delta)*(RC_RL+RC_RH+RC_UL+RC_UH)))*rx_DSTB),
         cRxDR = (((mdr)*((delta)*(RC_RL+RC_RH+RC_UL+RC_UH)))*rx_DRTB),
-        FNdis = acf(floor(times))*(((1-alpha_min)*(M_RL+M_RH+M_UL+M_UH))+((1-alpha_sub)*(S_RL+S_RH+S_UL+S_UH))+((1-alpha_cln)*(C_RL+C_RH+C_UL+C_UH))),
-        FNmin = acf(floor(times))*((1-alpha_min)*(M_RL+M_RH+M_UL+M_UH)),
-        FNsub = acf(floor(times))*((1-alpha_sub)*(S_RL+S_RH+S_UL+S_UH)),
-        FNcln = acf(floor(times))*((1-alpha_cln)*(C_RL+C_RH+C_UL+C_UH)),
         ARI   = ((beta/PopT)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH))))) # ARI
     })
   }
