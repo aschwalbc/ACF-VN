@@ -13,12 +13,12 @@ library(progress) # Displays progress bar
 
 # 1. Load data ==========
 parms <- import(here("outputs","pts","fitpts.Rdata"))
-parms <- parms %>% sample_frac(0.02)
+#parms <- parms %>% sample_frac(0.02)
 WPP <- import(here("data","pop","WPP.Rdata"))
 WUP <- import(here("data","pop","WUP.Rdata"))
 GDP <- import(here("data","pop","GDP.Rdata"))
 base <- import(here("data","state_base.Rdata"))
-DALY <- import(here("data","pop","DALYs.xlsx"))
+DALYs <- import(here("data","pop","DALYs.xlsx"))
 
 # 2. Strategies ==========
 # 2.1 Baseline parameters
@@ -100,7 +100,7 @@ rx_DSTB <- 81 # Treatment DSTB
 rx_DRTB <- 973 # Treatment DRTB
 
 # 2.8 DALYs
-daly <- approxfun(DALY$year, DALY$daly_pc, method = 'linear', rule = 2)
+daly <- approxfun(DALYs$year, DALYs$daly_pc, method = 'linear', rule = 2)
 
 # 2.9 MDR proportion
 mdr <- 0.05 # DR-TB incidence over total incidence (2015-2021)
@@ -242,9 +242,9 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
         tTPos   = acf(floor(times))*((alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH))), # TP diagnosed
         cPCFs   = (((1-mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*screen_pcf_DSTB),
         cPCFr   = (((mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*screen_pcf_DRTB),
-        cACF1   = acf(floor(times))*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))(alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*screen_acf_xpert,
-        cACF2   = acf(floor(times))*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))(alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*screen_acf_cxrxpert,
-        cACF3   = acf(floor(times))*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))(alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*screen_acf_cxr,
+        cACF1   = acf(floor(times))*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*screen_acf_xpert,
+        cACF2   = acf(floor(times))*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*screen_acf_cxrxpert,
+        cACF3   = acf(floor(times))*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*screen_acf_cxr,
         cRxPCFs = (((1-mdr)*((delta)*(RC_RL+RC_RH+RC_UL+RC_UH)))*rx_DSTB),
         cRxPCFr = (((mdr)*((delta)*(RC_RL+RC_RH+RC_UL+RC_UH)))*rx_DRTB),
         cRxTPs  = (((1-mdr)*((delta)*(SM_RL+SM_RH+SM_UL+SM_UH+SS_RL+SS_RH+SS_UL+SS_UH+SC_RL+SC_RH+SC_UL+SC_UH)))*rx_DSTB),
@@ -285,7 +285,7 @@ pb <- progress_bar$new(format = "[:bar] :percent :eta", total = nrow(parms))
 for (i in 1:nrow(parms)) {
   curr_parms <- as.data.frame(parms[i,])
   curr_base <- as.data.frame(base[i,-1])
-  
+
   outbase[[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base))
   outbase[[i]] <- outbase[[i]] %>% mutate(type = 'base', run = i)
   pb$tick()
