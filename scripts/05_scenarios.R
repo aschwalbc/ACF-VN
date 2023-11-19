@@ -226,26 +226,33 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
         dM_RL, dM_RH, dM_UL, dM_UH, dSM_RL, dSM_RH, dSM_UL, dSM_UH, dS_RL, dS_RH, dS_UL, dS_UH, dSS_RL, dSS_RH, dSS_UL, dSS_UH, 
         dC_RL, dC_RH, dC_UL, dC_UH, dRC_RL, dRC_RH, dRC_UL, dRC_UH, dSC_RL, dSC_RH, dSC_UL, dSC_UH, 
         dP_RL, dP_RH, dP_UL, dP_UH, dSP_RL, dSP_RH, dSP_UL, dSP_UH),
-        rMin  = ((M_RL+M_RH+M_UL+M_UH)/PopT*1e5), # Minimal TB (per 100k)
-        tMin  = (M_RL+M_RH+M_UL+M_UH), # Total minimal TB
-        rSub  = ((S_RL+S_RH+S_UL+S_UH)/PopT*1e5), # Subclinical TB (per 100k)
-        tSub  = (S_RL+S_RH+S_UL+S_UH), # Total subclinical TB
-        rCln  = ((C_RL+C_RH+C_UL+C_UH)/PopT*1e5), # Clinical TB (per 100k)
-        tCln  = (C_RL+C_RH+C_UL+C_UH), # Total clinical TB
-        rTBc  = ((S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH)/PopT*1e5), # Infectious TB (per 100k)
-        tTBc  = (S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Total infectious TB
-        rMor  = ((omega*(C_RL+C_RH+C_UL+C_UH))/PopT*1e5), # Clinical TB mortality per time (per 100k)
-        tMor  = (omega*(C_RL+C_RH+C_UL+C_UH)), # Clinical TB mortality per time
-        rDxs  = ((iota_cln*(C_RL+C_RH+C_UL+C_UH))/PopT*1e5), # Notifications cTB per time in adults (per 100k)
-        tDxs  = (iota_cln*(C_RL+C_RH+C_UL+C_UH)), # Total notifications cTB per time in adults
-        dTBc  = daly(times)*(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH),
-        tFPos = acf(floor(times))*((alpha_sic*(SN_RL+SN_RH+SN_UL+SN_UH+SI_RL+SI_RH+SI_UL+SI_UH+SW_RL+SW_RH+SW_UL+SW_UH))+(alpha_rec*(SO_RL+SO_RH+SO_UL+SO_UH))+(alpha_tre*(SP_RL+SP_RH+SP_UL+SP_UH))), # FP diagnosed
-        tTPos = acf(floor(times))*((alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH))), # TP diagnosed
-        cPCFS = (((1-mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*screen_pcf_DSTB),
-        cPCFR = (((mdr)*((iota_cln)*(RC_RL+RC_RH+RC_UL+RC_UH)))*screen_pcf_DRTB),
-        cRxDS = (((1-mdr)*((delta)*(RC_RL+RC_RH+RC_UL+RC_UH)))*rx_DSTB),
-        cRxDR = (((mdr)*((delta)*(RC_RL+RC_RH+RC_UL+RC_UH)))*rx_DRTB),
-        ARI   = ((beta/PopT)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH))))) # ARI
+        rMin    = ((M_RL+M_RH+M_UL+M_UH)/PopT*1e5), # Minimal TB (per 100k)
+        tMin    = (M_RL+M_RH+M_UL+M_UH), # Total minimal TB
+        rSub    = ((S_RL+S_RH+S_UL+S_UH)/PopT*1e5), # Subclinical TB (per 100k)
+        tSub    = (S_RL+S_RH+S_UL+S_UH), # Total subclinical TB
+        rCln    = ((C_RL+C_RH+C_UL+C_UH)/PopT*1e5), # Clinical TB (per 100k)
+        tCln    = (C_RL+C_RH+C_UL+C_UH), # Total clinical TB
+        rTBc    = ((S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH)/PopT*1e5), # Infectious TB (per 100k)
+        tTBc    = (S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Total infectious TB
+        rMor    = ((omega*(C_RL+C_RH+C_UL+C_UH))/PopT*1e5), # Clinical TB mortality per time (per 100k)
+        tMor    = (omega*(C_RL+C_RH+C_UL+C_UH)), # Clinical TB mortality per time
+        rDxs    = ((iota_cln*(C_RL+C_RH+C_UL+C_UH))/PopT*1e5), # Notifications cTB per time in adults (per 100k)
+        tDxs    = (iota_cln*(C_RL+C_RH+C_UL+C_UH)), # Total notifications cTB per time in adults
+        tFPos   = acf(floor(times))*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_tre*(P_RL+P_RH+P_UL+P_UH))), # FP diagnosed
+        tTPos   = acf(floor(times))*((alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH))), # TP diagnosed
+        cPCFs   = (((1-mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*screen_pcf_DSTB),
+        cPCFr   = (((mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*screen_pcf_DRTB),
+        cACF1   = acf(floor(times))*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))(alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*screen_acf_xpert,
+        cACF2   = acf(floor(times))*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))(alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*screen_acf_cxrxpert,
+        cACF3   = acf(floor(times))*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))(alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*screen_acf_cxr,
+        cRxPCFs = (((1-mdr)*((delta)*(RC_RL+RC_RH+RC_UL+RC_UH)))*rx_DSTB),
+        cRxPCFr = (((mdr)*((delta)*(RC_RL+RC_RH+RC_UL+RC_UH)))*rx_DRTB),
+        cRxTPs  = (((1-mdr)*((delta)*(SM_RL+SM_RH+SM_UL+SM_UH+SS_RL+SS_RH+SS_UL+SS_UH+SC_RL+SC_RH+SC_UL+SC_UH)))*rx_DSTB),
+        cRxTPr  = (((mdr)*((delta)*(SM_RL+SM_RH+SM_UL+SM_UH+SS_RL+SS_RH+SS_UL+SS_UH+SC_RL+SC_RH+SC_UL+SC_UH)))*rx_DRTB),
+        cRxFPs  = (((1-mdr)*((delta)*(SN_RL+SN_RH+SN_UL+SN_UH+SI_RL+SI_RH+SI_UL+SI_UH+SW_RL+SW_RH+SW_UL+SW_UH+SO_RL+SO_RH+SO_UL+SO_UH+SP_RL+SP_RH+SP_UL+SP_UH)))*rx_DSTB),
+        cRxFPr  = (((mdr)*((delta)*(SN_RL+SN_RH+SN_UL+SN_UH+SI_RL+SI_RH+SI_UL+SI_UH+SW_RL+SW_RH+SW_UL+SW_UH+SO_RL+SO_RH+SO_UL+SO_UH+SP_RL+SP_RH+SP_UL+SP_UH)))*rx_DRTB),
+        DALYs   = daly(floor(times))*(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # DALY estimates
+        ARI     = ((beta/PopT)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH))))) # ARI
     })
   }
   
