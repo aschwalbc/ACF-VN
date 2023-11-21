@@ -19,7 +19,7 @@ WUP <- import(here("data","pop","WUP.Rdata"))
 GDP <- import(here("data","pop","GDP.Rdata"))
 base <- import(here("data","state_base.Rdata"))
 DALYs <- import(here("data","pop","DALYs.xlsx"))
-set.seed(251195)
+set.seed(251195) # Set seed for randomisation
 
 # 2. Strategies ==========
 # 2.1 Baseline parameters
@@ -312,11 +312,17 @@ outacfc <- list()
 
 for (j in names(acf_year)) {
   rounds <- acf_year[[j]]
-  print(acf_year[j])
+  print(names(acf_year[j]))
   
-  outacfa[[j]] <- list()
-  outacfb[[j]] <- list()
-  outacfc[[j]] <- list()
+  if (j %in% c("02", "05", "10")) {
+    outacfa[[j]] <- list()
+  }
+  if (j %in% c("02", "05", "12")) {
+    outacfb[[j]] <- list()
+  }
+  if (j %in% c("01", "02", "03")) {
+    outacfc[[j]] <- list()
+  }
   
   pb <- progress_bar$new(format = "[:bar] :percent :eta", total = nrow(parms))
   
@@ -324,29 +330,35 @@ for (j in names(acf_year)) {
     curr_parms <- as.data.frame(parms[i,])
     curr_base <- as.data.frame(base[i,-1])
     
-    outacfa[[j]][[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfa, acf_times = acf_year[[j]]))
-    outacfa[[j]][[i]] <- outacfa[[j]][[i]] %>% mutate(type = 'acfa', run = i, round = j)
+    if (j %in% c("02", "05", "10")) {
+      outacfa[[j]][[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfa, acf_times = acf_year[[j]]))
+      outacfa[[j]][[i]] <- outacfa[[j]][[i]] %>% mutate(type = 'acfa', run = i, round = j)
+    }
     
-    outacfb[[j]][[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfb, acf_times = acf_year[[j]]))
-    outacfb[[j]][[i]] <- outacfb[[j]][[i]] %>% mutate(type = 'acfb', run = i, round = j)
+    if (j %in% c("02", "05", "12")) {
+      outacfb[[j]][[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfb, acf_times = acf_year[[j]]))
+      outacfb[[j]][[i]] <- outacfb[[j]][[i]] %>% mutate(type = 'acfb', run = i, round = j)
+    }
     
-    outacfc[[j]][[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfc, acf_times = acf_year[[j]]))
-    outacfc[[j]][[i]] <- outacfc[[j]][[i]] %>% mutate(type = 'acfc', run = i, round = j)
+    if (j %in% c("01", "02", "03")) {
+      outacfc[[j]][[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfc, acf_times = acf_year[[j]]))
+      outacfc[[j]][[i]] <- outacfc[[j]][[i]] %>% mutate(type = 'acfc', run = i, round = j)
+    }
     
     pb$tick()
   }
 }
 
-for (k in 1:length(acf_year)) { 
-  acfa_name <- paste0("r", names(acf_year[k]), "_outacfa_df")
+for (k in 1:3) { 
+  acfa_name <- paste0("r", names(outacfa[k]), "_outacfa_df")
   assign(acfa_name, do.call(rbind, outacfa[[k]]))
   export(get(acfa_name), here("outputs", "results", paste0(acfa_name, ".Rdata")))
   
-  acfb_name <- paste0("r", names(acf_year[k]), "_outacfb_df")
+  acfb_name <- paste0("r", names(outacfb[k]), "_outacfb_df")
   assign(acfb_name, do.call(rbind, outacfb[[k]]))
   export(get(acfb_name), here("outputs", "results", paste0(acfb_name, ".Rdata")))
   
-  acfc_name <- paste0("r", names(acf_year[k]), "_outacfc_df")
+  acfc_name <- paste0("r", names(outacfc[k]), "_outacfc_df")
   assign(acfc_name, do.call(rbind, outacfc[[k]]))
   export(get(acfc_name), here("outputs", "results", paste0(acfc_name, ".Rdata")))
 }
