@@ -9,79 +9,81 @@ library(tidyverse) # To use tidyverse
 library(data.table) # Faster than data.frame
 
 # 1. Load data ==========
-runs <- list()
-
 folder <- here("outputs", "results")
 files <- list.files(folder, full.names = TRUE)
 
 for (i in files) {
   file <- tools::file_path_sans_ext(basename(i))
   dt <- setDT(import(i))
-  prefix <- substring(file, 1, 3)
-  if (!prefix %in% names(runs)) {
-    runs[[prefix]] <- list()
-  }
-  runs[[prefix]] <- append(runs[[prefix]], list(dt))
+  assign(file, dt)
   print(file)
 }
 
-rm(list = setdiff(ls(), "runs"))
-
-for (i in 1:length(runs)) {
-  name <- paste0(names(runs)[i], "outs")
-  if (i == 1) {
-    dt <- rbindlist(list(runs[[i]][[1]]))
-  } else {
-    dt <- rbindlist(list(runs[[i]][[1]], runs[[i]][[2]], runs[[i]][[3]]))
-  }
-  assign(name, dt)
-  print(name)
-}
-
-rm(dt, runs, i, name)
+rm(list = setdiff(ls(), ls(pattern = "outacf|base")))
 
 # 2. Data curation ==========
-df_names <- ls(pattern = "outs")
+df_names <- ls(pattern = "^r")
 
 outs <- rbindlist(lapply(df_names, function(df_name) {
   df <- get(df_name)
-  df %>% select(type, run, time, round, Pop, Sub, Cln, TBc, rMor, tMor, FPnds, TPdis)
+  
+  result <- df %>% 
+    select(type, run, round, time, everything()) %>% 
+    select(-contains("_"))
+  
+  return(result)
 }))
 
 rm(list = setdiff(ls(), "outs"))
 
+options(scipen = 999)
+
 outs_m <- outs %>% 
   arrange(type, run, time) %>% 
+  mutate(cPCF = cPCFs + cPCFr, # Cost of PCF (DSTB + DRTB)
+         cRxPCF = cRxPCFs + cRxPCFr, # Cost of treatment PCF (DSTB + DRTB)
+         cRxTP = cRxTPs + cRxTPr, # Cost of treatment ACF TP (DSTB + DRTB)
+         cRxFP = cRxFPs + cRxFPr) %>% # Cost of treatment ACF FP (DSTB + DRTB)
+  mutate(cCF = cPCF + cACF,
+         cRx = cRxPCF + cRxTP + cRxFP) %>% 
   group_by(run, time) %>% 
-  mutate(pTBc = TBc/TBc[type == 'base'], # Proportional reduction TB prevalence to BAU
-         dMor = tMor - tMor[type == 'base'], # TB mortality difference to BAU
-         pMor = rMor/rMor[type == 'base']) %>%  # Proportional reduction TB mortality to BAU
+  mutate(prTBc = tTBc/tTBc[type == 'base'], # Proportional TB prevalence to BAU
+         dfTBc = abs(tTBc - tTBc[type == 'base']), # TB prevalence difference to BAU
+         prMor = rMor/rMor[type == 'base'], # Proportional TB mortality to BAU
+         dfMor = abs(tMor - tMor[type == 'base'])) %>%  # TB mortality difference to BAU
   ungroup() %>% 
-  mutate(redpTBc = 1-pTBc) %>% # Proportional reduction TB mortality to BAU
+  mutate(redTBc = 1-prTBc) %>% # Proportional TB prevalence reduction
   group_by(type, run) %>% 
-  mutate(pFP = ifelse(FPnds == 0, 0, FPnds/(TPdis+FPnds))) %>% 
+  mutate(prFP = ifelse(tFPos == 0, 0, tFPos/(tTPos+tFPos))) %>% 
   pivot_longer(cols = -c(time, type, run, round), names_to = "var", values_to = "values") %>% 
-  group_by(time, type, var, round) %>% 
+  group_by(time, type, round, var) %>% 
   summarise(val = median(values, na.rm = TRUE), 
             lo = quantile(values, 0.025, na.rm = TRUE), 
             hi = quantile(values, 0.975, na.rm = TRUE))
-
+  
 outs_yr <- outs %>% 
   arrange(type, run, time) %>% 
   filter(time == floor(time)) %>% 
   group_by(type, run, round) %>%
-  mutate(cumMor = cumsum(tMor), # Cumulative TB mortality
-         cumFPnds = cumsum(FPnds), # Cumulative FP diagnoses
-         cumTPdis = cumsum(TPdis)) %>% # Cumulative TP diagnoses
+  mutate(cumTBc = cumsum(tTBc), # Cumulative TB prevalence
+         cumMor = cumsum(tMor), # Cumulative TB mortality
+         cumFPos = cumsum(tFPos), # Cumulative FP diagnoses
+         cumTPos = cumsum(tTPos), # Cumulative TP diagnoses
+         cumRx = cumsum(tFPos) + cumsum(tTPos)) %>% # Cumulative treated
   ungroup() %>% 
   group_by(type, run) %>% 
-  mutate(cumpFP = ifelse(cumFPnds == 0, 0, cumFPnds/(cumTPdis+cumFPnds))) %>% 
+  mutate(cumprFP = ifelse(cumFPos == 0, 0, cumFPos/cumRx)) %>% 
+  select(time, type, run, round, cumTBc, cumMor, cumFPos, cumTPos, cumRx, cumprFP) %>% 
   pivot_longer(cols = -c(time, type, run, round), names_to = "var", values_to = "values") %>% 
-  group_by(time, type, var, round) %>% 
+  group_by(time, type, round, var) %>% 
   summarise(val = median(values, na.rm = TRUE), 
             lo = quantile(values, 0.025, na.rm = TRUE), 
             hi = quantile(values, 0.975, na.rm = TRUE))
 
+outs <- outs_m %>% 
+  rbind(outs_yr) %>% 
+  arrange(factor(type, levels = c("base", "acfa", "acfb", "acfc")), round, time) 
+
+rm(outs_m, outs_yr)
+
 export(outs, here("outputs", "outs", "outs.Rdata"))
-export(outs_m, here("outputs", "outs", "outs_m.Rdata"))
-export(outs_yr, here("outputs", "outs", "outs_yr.Rdata"))
