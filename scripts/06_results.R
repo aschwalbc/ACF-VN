@@ -36,8 +36,6 @@ outs <- rbindlist(lapply(df_names, function(df_name) {
 
 rm(list = setdiff(ls(), "outs"))
 
-options(scipen = 999)
-
 outs_m <- outs %>% 
   arrange(type, run, time) %>% 
   mutate(cPCF = cPCFs + cPCFr, # Cost of PCF (DSTB + DRTB)
@@ -60,6 +58,23 @@ outs_m <- outs %>%
   summarise(val = median(values, na.rm = TRUE), 
             lo = quantile(values, 0.025, na.rm = TRUE), 
             hi = quantile(values, 0.975, na.rm = TRUE))
+
+outs_m <- outs %>% 
+  arrange(type, run, time) %>% 
+  group_by(run, time) %>% 
+  mutate(pIn01 = In01/In01[type == 'base'], 
+         dfIn01 = abs(In01 - In01[type == 'base']),
+         pIn02 = In02/In02[type == 'base'], 
+         dfIn02 = abs(In02 - In02[type == 'base']),
+         pIn03 = In03/In03[type == 'base'], 
+         dfIn03 = abs(In03 - In03[type == 'base']),
+         pIn05 = In05/In05[type == 'base'], 
+         dfIn05 = abs(In05 - In05[type == 'base'])) %>% 
+  pivot_longer(cols = -c(time, type, run, round), names_to = "var", values_to = "values") %>% 
+  group_by(time, type, round, var) %>% 
+  summarise(val = median(values, na.rm = TRUE), 
+            lo = quantile(values, 0.025, na.rm = TRUE), 
+            hi = quantile(values, 0.975, na.rm = TRUE))
   
 outs_yr <- outs %>% 
   arrange(type, run, time) %>% 
@@ -74,6 +89,30 @@ outs_yr <- outs %>%
   group_by(type, run) %>% 
   mutate(cumprFP = ifelse(cumFPos == 0, 0, cumFPos/cumRx)) %>% 
   select(time, type, run, round, cumTBc, cumMor, cumFPos, cumTPos, cumRx, cumprFP) %>% 
+  pivot_longer(cols = -c(time, type, run, round), names_to = "var", values_to = "values") %>% 
+  group_by(time, type, round, var) %>% 
+  summarise(val = median(values, na.rm = TRUE), 
+            lo = quantile(values, 0.025, na.rm = TRUE), 
+            hi = quantile(values, 0.975, na.rm = TRUE))
+
+outs_yr <- outs %>% 
+  arrange(type, run, time) %>% 
+  filter(time == floor(time)) %>% 
+  group_by(run, time) %>% 
+  mutate(pIn01 = In01/In01[type == 'base'], 
+         dfIn01 = abs(In01 - In01[type == 'base']),
+         pIn02 = In02/In02[type == 'base'], 
+         dfIn02 = abs(In02 - In02[type == 'base']),
+         pIn03 = In03/In03[type == 'base'], 
+         dfIn03 = abs(In03 - In03[type == 'base']),
+         pIn05 = In05/In05[type == 'base'], 
+         dfIn05 = abs(In05 - In05[type == 'base'])) %>% 
+  ungroup() %>% 
+  group_by(type, run, round) %>%
+  mutate(cumIn01 = cumsum(dfIn01),
+         cumIn02 = cumsum(dfIn02),
+         cumIn03 = cumsum(dfIn03),
+         cumIn05 = cumsum(dfIn05)) %>%
   pivot_longer(cols = -c(time, type, run, round), names_to = "var", values_to = "values") %>% 
   group_by(time, type, round, var) %>% 
   summarise(val = median(values, na.rm = TRUE), 

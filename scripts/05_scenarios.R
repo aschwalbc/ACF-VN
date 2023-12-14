@@ -236,26 +236,30 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
         dM_RL, dM_RH, dM_UL, dM_UH, dSM_RL, dSM_RH, dSM_UL, dSM_UH, dS_RL, dS_RH, dS_UL, dS_UH, dSS_RL, dSS_RH, dSS_UL, dSS_UH, 
         dC_RL, dC_RH, dC_UL, dC_UH, dRC_RL, dRC_RH, dRC_UL, dRC_UH, dSC_RL, dSC_RH, dSC_UL, dSC_UH, 
         dP_RL, dP_RH, dP_UL, dP_UH, dSP_RL, dSP_RH, dSP_UL, dSP_UH),
-        rTBc    = ((S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH)/PopT*1e5), # Infectious TB (per 100k)
-        tTBc    = (S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Total infectious TB
-        rMor    = ((omega*(C_RL+C_RH+C_UL+C_UH))/PopT*1e5), # Clinical TB mortality per time (per 100k)
-        tMor    = (omega*(C_RL+C_RH+C_UL+C_UH)), # Clinical TB mortality per time
-        rDxs    = ((iota_cln*(C_RL+C_RH+C_UL+C_UH))/PopT*1e5), # Notifications cTB per time in adults (per 100k)
-        tDxs    = (iota_cln*(C_RL+C_RH+C_UL+C_UH)), # Total notifications cTB per time in adults
-        tFPos   = (acf(floor(times))*pop_target*pop_reached)*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_tre*(P_RL+P_RH+P_UL+P_UH))), # FP diagnosed
-        tTPos   = (acf(floor(times))*pop_target*pop_reached)*((alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH))), # TP diagnosed
-        tScrn   = (PopT-(dSN_RL+dSN_RH+dSN_UL+dSN_UH+dSI_RL+dSI_RH+dSI_UL+dSI_UH+dSW_RL+dSW_RH+dSW_UL+dSW_UH+dSO_RL+dSO_RH+dSO_UL+dSO_UH+dSM_RL+dSM_RH+dSM_UL+dSM_UH+dSS_RL+dSS_RH+dSS_UL+dSS_UH+dRC_RL+dRC_RH+dRC_UL+dRC_UH+dSC_RL+dSC_RH+dSC_UL+dSC_UH+dSP_RL+dSP_RH+dSP_UL+dSP_UH)),
-        cPCFs   = (((1-mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*screen_pcf[["dstb"]]),
-        cPCFr   = (((mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*screen_pcf[["drtb"]]),
-        cACF    = (acf(floor(times))*pop_target*pop_reached)*(PopT-(dSN_RL+dSN_RH+dSN_UL+dSN_UH+dSI_RL+dSI_RH+dSI_UL+dSI_UH+dSW_RL+dSW_RH+dSW_UL+dSW_UH+dSO_RL+dSO_RH+dSO_UL+dSO_UH+dSM_RL+dSM_RH+dSM_UL+dSM_UH+dSS_RL+dSS_RH+dSS_UL+dSS_UH+dRC_RL+dRC_RH+dRC_UL+dRC_UH+dSC_RL+dSC_RH+dSC_UL+dSC_UH+dSP_RL+dSP_RH+dSP_UL+dSP_UH))*cm_screen_acf,
-        cACFpos = (acf(floor(times))*pop_target*pop_reached)*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*cm_screen_acf,
-        cRxPCFs = (((1-mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*tb_rx[["dstb"]]),
-        cRxPCFr = (((mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*tb_rx[["drtb"]]),
-        cRxTPs  = ((1-mdr)*(acf(floor(times))*pop_target*pop_reached)*((alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*tb_rx[["dstb"]]),
-        cRxTPr  = ((mdr)*(acf(floor(times))*pop_target*pop_reached)*((alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*tb_rx[["drtb"]]),
-        cRxFPs  = ((1-mdr)*(acf(floor(times))*pop_target*pop_reached)*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_tre*(P_RL+P_RH+P_UL+P_UH)))*tb_rx[["dstb"]]),
-        cRxFPr  = ((mdr)*(acf(floor(times))*pop_target*pop_reached)*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_tre*(P_RL+P_RH+P_UL+P_UH)))*tb_rx[["drtb"]]),
-        DALYs   = daly(floor(times))*(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # DALY estimates
+        # rTBc    = ((S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH)/PopT*1e5), # Infectious TB (per 100k)
+        # tTBc    = (S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # Total infectious TB
+        # rMor    = ((omega*(C_RL+C_RH+C_UL+C_UH))/PopT*1e5), # Clinical TB mortality per time (per 100k)
+        # tMor    = (omega*(C_RL+C_RH+C_UL+C_UH)), # Clinical TB mortality per time
+        # rDxs    = ((iota_cln*(C_RL+C_RH+C_UL+C_UH))/PopT*1e5), # Notifications cTB per time in adults (per 100k)
+        # tDxs    = (iota_cln*(C_RL+C_RH+C_UL+C_UH)), # Total notifications cTB per time in adults
+        # tFPos   = (acf(floor(times))*pop_target*pop_reached)*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_tre*(P_RL+P_RH+P_UL+P_UH))), # FP diagnosed
+        # tTPos   = (acf(floor(times))*pop_target*pop_reached)*((alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH))), # TP diagnosed
+        # tScrn   = (PopT-(dSN_RL+dSN_RH+dSN_UL+dSN_UH+dSI_RL+dSI_RH+dSI_UL+dSI_UH+dSW_RL+dSW_RH+dSW_UL+dSW_UH+dSO_RL+dSO_RH+dSO_UL+dSO_UH+dSM_RL+dSM_RH+dSM_UL+dSM_UH+dSS_RL+dSS_RH+dSS_UL+dSS_UH+dRC_RL+dRC_RH+dRC_UL+dRC_UH+dSC_RL+dSC_RH+dSC_UL+dSC_UH+dSP_RL+dSP_RH+dSP_UL+dSP_UH)), # Total screened
+        # cPCFs   = (((1-mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*screen_pcf[["dstb"]]), # Costs PCF DS-TB
+        # cPCFr   = (((mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*screen_pcf[["drtb"]]), # Costs PCF DR-TB
+        # cACF    = (acf(floor(times))*pop_target*pop_reached)*(PopT-(dSN_RL+dSN_RH+dSN_UL+dSN_UH+dSI_RL+dSI_RH+dSI_UL+dSI_UH+dSW_RL+dSW_RH+dSW_UL+dSW_UH+dSO_RL+dSO_RH+dSO_UL+dSO_UH+dSM_RL+dSM_RH+dSM_UL+dSM_UH+dSS_RL+dSS_RH+dSS_UL+dSS_UH+dRC_RL+dRC_RH+dRC_UL+dRC_UH+dSC_RL+dSC_RH+dSC_UL+dSC_UH+dSP_RL+dSP_RH+dSP_UL+dSP_UH))*cm_screen_acf, # Cost ACF
+        # cACFpos = (acf(floor(times))*pop_target*pop_reached)*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*cm_screen_acf, # Cost ACF - only positives
+        # cRxPCFs = (((1-mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*tb_rx[["dstb"]]), # Costs treatment PCF DS-TB
+        # cRxPCFr = (((mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*tb_rx[["drtb"]]), # Costs treatment PCF DR-TB
+        # cRxTPs  = ((1-mdr)*(acf(floor(times))*pop_target*pop_reached)*((alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*tb_rx[["dstb"]]), # Cost treatment true positives DS-TB
+        # cRxTPr  = ((mdr)*(acf(floor(times))*pop_target*pop_reached)*((alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*tb_rx[["drtb"]]), # Cost treatment true positives DR-TB
+        # cRxFPs  = ((1-mdr)*(acf(floor(times))*pop_target*pop_reached)*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_tre*(P_RL+P_RH+P_UL+P_UH)))*tb_rx[["dstb"]]), # Cost treatment false positives DS-TB
+        # cRxFPr  = ((mdr)*(acf(floor(times))*pop_target*pop_reached)*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_tre*(P_RL+P_RH+P_UL+P_UH)))*tb_rx[["drtb"]]), # Cost treatment false positives DR-TB
+        # DALYs   = daly(floor(times))*(S_RL+S_RH+S_UL+S_UH+C_RL+C_RH+C_UL+C_UH), # DALY estimates
+        In01 = lambda_infmin*(I_RL+I_RH+I_UL+I_UH) + lambda_infsub*(I_RL+I_RH+I_UL+I_UH), # 01: Infection to minimal and subclinical
+        In02 = lambda_infsub*(I_RL+I_RH+I_UL+I_UH), # 02: Infection to subclinical
+        In03 = lambda_infsub*(I_RL+I_RH+I_UL+I_UH) + lambda_minsub*(M_RL+M_RH+M_UL+M_UH), # 03: Infection to subclinical and minimal to subclinical
+        In05 = lambda_subcln*(S_RL+S_RH+S_UL+S_UH), # 05: Subclinical to clinical
         ARI     = ((beta/PopT)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH))))) # ARI
     })
   }
