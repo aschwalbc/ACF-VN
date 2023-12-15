@@ -259,7 +259,7 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
         In01 = lambda_infmin*(I_RL+I_RH+I_UL+I_UH) + lambda_infsub*(I_RL+I_RH+I_UL+I_UH), # 01: Infection to minimal and subclinical
         In02 = lambda_infsub*(I_RL+I_RH+I_UL+I_UH), # 02: Infection to subclinical
         In03 = lambda_infsub*(I_RL+I_RH+I_UL+I_UH) + lambda_minsub*(M_RL+M_RH+M_UL+M_UH), # 03: Infection to subclinical and minimal to subclinical
-        In05 = lambda_subcln*(S_RL+S_RH+S_UL+S_UH), # 05: Subclinical to clinical
+        In04 = lambda_subcln*(S_RL+S_RH+S_UL+S_UH), # 04: Subclinical to clinical
         ARI     = ((beta/PopT)*((kappa*(S_RL+S_RH+S_UL+S_UH))+(C_RL+C_RH+C_UL+C_UH))))) # ARI
     })
   }
