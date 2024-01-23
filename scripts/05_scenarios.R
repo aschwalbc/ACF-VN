@@ -368,4 +368,21 @@ for (k in 1:3) {
 }
 options(warn = 1)
 
+# 4.3 ACT3 comparison
+act3 <- list()
+
+pb <- progress_bar$new(format = "[:bar] :percent :eta", total = nrow(parms))
+
+for (i in 1:nrow(parms)) {
+  curr_parms <- as.data.frame(parms[i,])
+  curr_base <- as.data.frame(base[i,-1])
+  act3[[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfa, acf_times = seq(2025, 2028, 1))) 
+  act3[[i]] <- act3[[i]] %>% mutate(type = 'acfa', run = i, round = '04')
+  
+  pb$tick()
+}
+
+act3 <- do.call(rbind, act3)
+export(act3, here("outputs", "act3", "act3.Rdata"))
+
 rm(list = ls())
