@@ -20,6 +20,7 @@ GDP <- import(here("data","pop","GDP.Rdata"))
 base <- import(here("data","state_base.Rdata"))
 DALYs <- import(here("data","pop","DALYs.xlsx"))
 set.seed(251195) # Set seed for randomisation
+options(scipen = 999) # Remove scientific notation
 
 # 2. Strategies ==========
 # 2.1 Baseline parameters
@@ -311,6 +312,7 @@ acf_year <- list(
 outacfa <- list()
 outacfb <- list()
 outacfc <- list()
+options(warn = 2)
 
 for (j in names(acf_year)) {
   rounds <- acf_year[[j]]
@@ -364,5 +366,6 @@ for (k in 1:3) {
   assign(acfc_name, do.call(rbind, outacfc[[k]]))
   export(get(acfc_name), here("outputs", "results", paste0(acfc_name, ".Rdata")))
 }
+options(warn = 1)
 
 rm(list = ls())
