@@ -88,7 +88,7 @@ sigH <- approxfun(GDP$year, (1-GDP$lowses), method = 'linear', rule = 2)
 rm(WPP, WUP, GDP)
 
 # 2.7 Cost data
-screen_pcf <- c(dstb = 104, drtb = 500) # Passive case-finding
+screen_bau <- c(dstb = 104, drtb = 500) # Passive case-finding
 screen_acf <- c(acfa = 8, acfb = 1.7, acfc = 1) # ACF per algorithm
 tb_rx <- c(dstb = 81, drtb = 973) # TB treatment
 
@@ -247,13 +247,12 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
         tDxs    = (iota_cln*(C_RL+C_RH+C_UL+C_UH)), # Total notifications cTB per time in adults
         tFPos   = (acf(floor(times))*pop_target*pop_reached)*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_tre*(P_RL+P_RH+P_UL+P_UH))), # FP diagnosed
         tTPos   = (acf(floor(times))*pop_target*pop_reached)*((alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH))), # TP diagnosed
-        tScrn   = (PopT-(dSN_RL+dSN_RH+dSN_UL+dSN_UH+dSI_RL+dSI_RH+dSI_UL+dSI_UH+dSW_RL+dSW_RH+dSW_UL+dSW_UH+dSO_RL+dSO_RH+dSO_UL+dSO_UH+dSM_RL+dSM_RH+dSM_UL+dSM_UH+dSS_RL+dSS_RH+dSS_UL+dSS_UH+dRC_RL+dRC_RH+dRC_UL+dRC_UH+dSC_RL+dSC_RH+dSC_UL+dSC_UH+dSP_RL+dSP_RH+dSP_UL+dSP_UH)), # Total screened
-        cPCFs   = (((1-mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*screen_pcf[["dstb"]]), # Costs PCF DS-TB
-        cPCFr   = (((mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*screen_pcf[["drtb"]]), # Costs PCF DR-TB
+        tScrn   = (acf(floor(times))*pop_target*pop_reached)*(PopT-(dSN_RL+dSN_RH+dSN_UL+dSN_UH+dSI_RL+dSI_RH+dSI_UL+dSI_UH+dSW_RL+dSW_RH+dSW_UL+dSW_UH+dSO_RL+dSO_RH+dSO_UL+dSO_UH+dSM_RL+dSM_RH+dSM_UL+dSM_UH+dSS_RL+dSS_RH+dSS_UL+dSS_UH+dRC_RL+dRC_RH+dRC_UL+dRC_UH+dSC_RL+dSC_RH+dSC_UL+dSC_UH+dSP_RL+dSP_RH+dSP_UL+dSP_UH)), # Total screened
+        cBAUs   = (((1-mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*screen_bau[["dstb"]]), # Costs BAU DS-TB
+        cBAUr   = (((mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*screen_bau[["drtb"]]), # Costs BAU DR-TB
         cACF    = (acf(floor(times))*pop_target*pop_reached)*(PopT-(dSN_RL+dSN_RH+dSN_UL+dSN_UH+dSI_RL+dSI_RH+dSI_UL+dSI_UH+dSW_RL+dSW_RH+dSW_UL+dSW_UH+dSO_RL+dSO_RH+dSO_UL+dSO_UH+dSM_RL+dSM_RH+dSM_UL+dSM_UH+dSS_RL+dSS_RH+dSS_UL+dSS_UH+dRC_RL+dRC_RH+dRC_UL+dRC_UH+dSC_RL+dSC_RH+dSC_UL+dSC_UH+dSP_RL+dSP_RH+dSP_UL+dSP_UH))*cm_screen_acf, # Cost ACF
-        cACFpos = (acf(floor(times))*pop_target*pop_reached)*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*cm_screen_acf, # Cost ACF - only positives
-        cRxPCFs = (((1-mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*tb_rx[["dstb"]]), # Costs treatment PCF DS-TB
-        cRxPCFr = (((mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*tb_rx[["drtb"]]), # Costs treatment PCF DR-TB
+        cRxBAUs = (((1-mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*tb_rx[["dstb"]]), # Costs treatment BAU DS-TB
+        cRxBAUr = (((mdr)*((iota_cln)*(C_RL+C_RH+C_UL+C_UH)))*tb_rx[["drtb"]]), # Costs treatment BAU DR-TB
         cRxTPs  = ((1-mdr)*(acf(floor(times))*pop_target*pop_reached)*((alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*tb_rx[["dstb"]]), # Cost treatment true positives DS-TB
         cRxTPr  = ((mdr)*(acf(floor(times))*pop_target*pop_reached)*((alpha_min*(M_RL+M_RH+M_UL+M_UH))+(alpha_sub*(S_RL+S_RH+S_UL+S_UH))+(alpha_cln*(C_RL+C_RH+C_UL+C_UH)))*tb_rx[["drtb"]]), # Cost treatment true positives DR-TB
         cRxFPs  = ((1-mdr)*(acf(floor(times))*pop_target*pop_reached)*((alpha_sic*(N_RL+N_RH+N_UL+N_UH+I_RL+I_RH+I_UL+I_UH+W_RL+W_RH+W_UL+W_UH))+(alpha_rec*(O_RL+O_RH+O_UL+O_UH))+(alpha_tre*(P_RL+P_RH+P_UL+P_UH)))*tb_rx[["dstb"]]), # Cost treatment false positives DS-TB
