@@ -375,8 +375,8 @@ pb <- progress_bar$new(format = "[:bar] :percent :eta", total = nrow(parms))
 for (i in 1:nrow(parms)) {
   curr_parms <- as.data.frame(parms[i,])
   curr_base <- as.data.frame(base[i,-1])
-  act3[[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfa, acf_times = seq(2025, 2028, 1))) 
-  act3[[i]] <- act3[[i]] %>% mutate(type = 'acfa', run = i, round = '04')
+  act3[[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfa, acf_times = seq(2025, 2027, 1))) 
+  act3[[i]] <- act3[[i]] %>% mutate(type = 'acfa', run = i, round = '03')
   
   pb$tick()
 }
