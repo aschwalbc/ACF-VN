@@ -44,7 +44,11 @@ outs <- outs %>%
          cRxFP = cRxFPs + cRxFPr,  # Cost of treatment ACF FP (DSTB + DRTB)
          cRxACF = cRxTPs + cRxTPr + cRxFPs + cRxFPr, # Cost of treatment ACF
          cCF = cBAUs + cBAUr + cACF, # Cost of case finding
-         cRx = cRxBAUs + cRxBAUr + cRxTPs + cRxTPr + cRxFPs + cRxFPr) # Cost of treatment
+         cRx = cRxBAUs + cRxBAUr + cRxTPs + cRxTPr + cRxFPs + cRxFPr) %>% # Cost of treatment
+  mutate(goal = case_when(type == 'acfa' & round == '02' ~ '100', type == 'acfa' & round == '05' ~ '50', type == 'acfa' & round == '10' ~ '20',
+                          type == 'acfb' & round == '02' ~ '100', type == 'acfb' & round == '05' ~ '50', type == 'acfb' & round == '12' ~ '20',
+                          type == 'acfc' & round == '01' ~ '100', type == 'acfc' & round == '02' ~ '50', type == 'acfc' & round == '03' ~ '20',
+                          type == 'base' ~ 'none'))
   
 outs_m <- outs %>%
   arrange(type, run, time) %>%
@@ -60,8 +64,8 @@ outs_m <- outs %>%
   group_by(type, run) %>% 
   mutate(prFP = ifelse(tFPos == 0, NA, tFPos / (tTPos + tFPos))) %>% # Proportion FP
   ungroup() %>% 
-  pivot_longer(cols = -c(time, type, run, round), names_to = "var", values_to = "values") %>%
-  group_by(time, type, round, var) %>%
+  pivot_longer(cols = -c(time, type, run, round, goal), names_to = "var", values_to = "values") %>%
+  group_by(time, type, round, goal, var) %>%
   summarise(val = median(values, na.rm = TRUE),
             lo = quantile(values, 0.025, na.rm = TRUE),
             hi = quantile(values, 0.975, na.rm = TRUE))
@@ -94,9 +98,9 @@ outs_yr <- outs %>%
   group_by(type, run) %>% 
   mutate(cumprFP = ifelse(cumFPos == 0, NA, cumFPos / (cumTPos + cumFPos))) %>% 
   ungroup() %>%
-  select(time, type, run, round, contains('cum')) %>%
-  pivot_longer(cols = -c(time, type, run, round), names_to = "var", values_to = "values") %>%
-  group_by(time, type, round, var) %>%
+  select(time, type, run, round, goal, contains('cum')) %>%
+  pivot_longer(cols = -c(time, type, run, round, goal), names_to = "var", values_to = "values") %>%
+  group_by(time, type, round, goal, var) %>%
   summarise(val = median(values, na.rm = TRUE), 
             lo = quantile(values, 0.025, na.rm = TRUE), 
             hi = quantile(values, 0.975, na.rm = TRUE))
