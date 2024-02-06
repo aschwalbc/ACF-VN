@@ -38,13 +38,13 @@ outs <- rbindlist(lapply(df_names, function(df_name) {
 rm(list = setdiff(ls(), "outs"))
 
 outs <- outs %>% 
-  mutate(cBAU = cPCFs + cPCFr, # Cost of BAU (DSTB + DRTB)
-         cRxBAU = cRxPCFs + cRxPCFr, # Cost of treatment BAU (DSTB + DRTB)
+  mutate(cBAU = cBAUs + cBAUr, # Cost of BAU (DSTB + DRTB)
+         cRxBAU = cRxBAUs + cRxBAUr, # Cost of treatment BAU (DSTB + DRTB)
          cRxTP = cRxTPs + cRxTPr,  # Cost of treatment ACF TP (DSTB + DRTB)
          cRxFP = cRxFPs + cRxFPr,  # Cost of treatment ACF FP (DSTB + DRTB)
          cRxACF = cRxTPs + cRxTPr + cRxFPs + cRxFPr, # Cost of treatment ACF
-         cCF = cPCFs + cPCFr + cACF, # Cost of case finding
-         cRx = cRxPCFs + cRxPCFr + cRxTPs + cRxTPr + cRxFPs + cRxFPr) # Cost of treatment
+         cCF = cBAUs + cBAUr + cACF, # Cost of case finding
+         cRx = cRxBAUs + cRxBAUr + cRxTPs + cRxTPr + cRxFPs + cRxFPr) # Cost of treatment
   
 outs_m <- outs %>%
   arrange(type, run, time) %>%
