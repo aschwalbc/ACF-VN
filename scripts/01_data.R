@@ -174,7 +174,7 @@ WPP <- WPP %>%
   mutate(mortrate = mort/pop, birthrate = births/pop) 
 rm(WPPb,WPPd)
 
-export(WPP,here("data","pop","WPP.Rdata")) # Save data frame
+export(WPP,here("data","WPP.Rdata")) # Save data frame
 
 WUP <- clean_names(WUP) %>% # Urbanisation data
   filter(index == 115) %>% 
@@ -186,7 +186,7 @@ WUP <- clean_names(WUP) %>% # Urbanisation data
   mutate(rurprop = 1-urbprop, iso3 = "VNM") %>% 
   select(iso3, year, urbprop, rurprop)
 
-export(WUP,here("data","pop","WUP.Rdata")) # Save data frame
+export(WUP,here("data","WUP.Rdata")) # Save data frame
 
 WEO <- WEO %>% # World Economic Output (GDP)
   setNames(WEO[1,]) %>%
@@ -218,5 +218,5 @@ WEO_exp <- data.frame(year = 2029:2050) %>%
 GDP <- rbind(select(WEO, c(year, lowses)), WEO_exp) %>% 
   filter(year >= 2020)
 
-export(GDP, here("data","pop","GDP.Rdata")) # Save data frame
+export(GDP, here("data","GDP.Rdata")) # Save data frame
 
