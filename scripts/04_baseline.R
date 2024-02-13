@@ -126,5 +126,5 @@ basemod <- basemod %>%
   mutate(across(contains('_'), ~ . * Pop)) %>% # Calculate population per compartment
   select(-Pop) # Remove variable
 
-export(basemod, here("data","state_base.Rdata")) # Save data frame
+export(basemod, here("data","base.Rdata")) # Save data frame
 rm(basemod, WPP)

@@ -241,7 +241,7 @@ h = ggplot(subset(results, var == "HLc" & time %in% from_to), aes(x=time)) +
 plot = (a|b|c|d)/(e|f|g|h)
 aspect_ratio = 2
 
-tiff(here("outputs", "plot.tiff"),  width = 14, height = 10, units = 'in', res = 200)
+tiff(here("plots", "00_fit.tiff"),  width = 14, height = 10, units = 'in', res = 200)
 print(plot)
 dev.off()
 
@@ -349,6 +349,6 @@ d = ggplot(subset(results, var == "Dxs" & time %in% from_to), aes(x=time)) +
 plot = (a|b|c|d)
 aspect_ratio = 2
 
-tiff(here("outputs", "plot_subset.tiff"),  width = 14, height = 5, units = 'in', res = 200)
+tiff(here("plots", "00_subfit.tiff"),  width = 14, height = 5, units = 'in', res = 200)
 print(plot)
 dev.off()
