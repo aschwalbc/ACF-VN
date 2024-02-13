@@ -10,7 +10,7 @@ library(tidyverse) # To use tidyverse
 library(naniar) # Visualise missingness
 
 # 1. Load data ==========
-data <- as.data.table(import(here("data","data.csv")))
+data <- as.data.table(import(here("data","tbs","data.csv")))
 WPP <- import(here("data","pop","WPP_Pop_1950-2100.csv")) # Population size 1950-2100
 WPPb <- import(here("data","pop","WPP_Births_1950-2100.csv")) # Births 1950-2100
 WPPda <- import(here("data","pop","WPP_Deaths_1950-2021.csv")) # Deaths 1950-2021
