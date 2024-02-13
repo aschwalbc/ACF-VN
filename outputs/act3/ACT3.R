@@ -8,7 +8,7 @@ set.seed(123)
 act3 <- import(here("outputs","act3","ACT3.csv"))
 act3$group <- factor(act3$group, levels = c('int', 'ctrl'))
 
-tiff(here("docs", "others", "ACT3.tiff"), width = 6, height = 5, units = 'in', res = 150)
+tiff(here("outputs","act3","ACT3.tiff"), width = 6, height = 5, units = 'in', res = 150)
 ggplot(act3, aes(x = year, y = rate, fill = group)) +
   geom_bar(stat = 'identity', position = position_dodge(width = 0.9)) +
   geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.25, 
