@@ -48,7 +48,8 @@ outs <- outs %>%
   mutate(goal = case_when(type == 'acfa' & round == '02' ~ '100', type == 'acfa' & round == '05' ~ '50', type == 'acfa' & round == '10' ~ '20',
                           type == 'acfb' & round == '02' ~ '100', type == 'acfb' & round == '05' ~ '50', type == 'acfb' & round == '12' ~ '20',
                           type == 'acfc' & round == '01' ~ '100', type == 'acfc' & round == '02' ~ '50', type == 'acfc' & round == '03' ~ '20',
-                          type == 'base' ~ 'none'))
+                          type == 'base' ~ 'none')) %>% 
+  mutate(goal = factor(goal, levels = c('100', '50', '20', 'none')))
   
 outs_m <- outs %>%
   arrange(type, run, time) %>%
