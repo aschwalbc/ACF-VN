@@ -203,7 +203,7 @@ targetsdb$var <- substr(rownames(targetsdb),1,3) # Create variable classificatio
 targetsdb$time <- as.numeric(substr(rownames(targetsdb),4,7)) # Create time variable
 colnames(targetsdb) <- c("lo","hi","var","time") # Rename columns
 
-export(targetsdb,here("data","targets.Rdata")) # Save data frame
+export(targetsdb,here("data","fit","targets.Rdata")) # Save data frame
 
 # 3.3 Target functions
 # 3.3.1 Target check function
@@ -489,7 +489,7 @@ parameters$parameter <- c("beta","kappa","gamma_infcle","lambda_infmin","gamma_m
                           "tau_min","tau_sub","rho_ini","rho_fin","sigma_ini","sigma_fin")
 parameters[,c(1,2,3)] <- round(parameters[,c(1,2,3)],3) # Round to 2 decimal places
 table <- data.frame(parameter = parameters$parameter, low  = parameters$`2.5%`, med = parameters$`50%`, hig = parameters$`97.5%`) # Output table
-export(table, here("data","parameters.Rdata")) # Save data frame
+export(table, here("data","parms.Rdata")) # Save data frame
 
 results <- as.data.frame(apply(pts_fin, 1, ode))[-seq(1,521),] # Runs ODE for each set of points
 results <- as.data.frame(t(apply(results, 1, quantile, probs = quants, na.rm = TRUE))) # Set parameter quantiles
