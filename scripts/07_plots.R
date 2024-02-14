@@ -19,6 +19,31 @@ scenarios <- c("Xpert", "CXR+Xpert", "CXR", "BAU")
 treatments <- c("BAU: Clinical", "ACF: Clinical", "ACF: Minimal", "ACF: Subclinical")
 types <- c("ACF", "BAU")
 type_labels <- c(acfa = "Xpert", acfb = "CXR+Xpert", acfc = "CXR")
+goal_labels <- c('100' = '100 per 100k', '50' = '50 per 100k', '20' = '20 per 100k')
+facet_labeller <- labeller(type = type_labels, goal = goal_labels)
+
+
+# TB prevalence rate
+acftbprev <- filter(outs, type != 'base' & var == 'rTBc') %>% mutate(db = 'acf')
+bautbprev <- filter(outs, type == 'base' & var == 'rTBc') %>% mutate(db = 'bau') %>% within(rm(type, goal))
+
+png(here("plots", "00_TBprev.png"), width = 12, height = 8, units = 'in', res = 150) 
+ggplot() +
+  geom_rect(data = unique(acftbprev[c("round", "type", "goal")]), aes(xmin = 2025, xmax = 2025 + (as.integer(round)), ymin = -Inf, ymax = Inf), fill = "lightgray", inherit.aes = FALSE, alpha = 0.3) +
+  geom_hline(data = acftbprev, aes(yintercept = as.numeric(as.character(goal)), group = interaction(type, goal)), color = "darkgrey", linetype = "dashed") +
+  facet_grid(cols = vars(goal), rows = vars(type), labeller = facet_labeller) +
+  geom_line(data = acftbprev, aes(x = time, y = val, colour = type)) +
+  geom_line(data = bautbprev, aes(x = time, y = val, colour = "#1D2D5F")) +
+  geom_ribbon(data = acftbprev, aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  geom_ribbon(data = bautbprev, aes(x = time, ymin = lo, ymax = hi, fill = "#1D2D5F"), alpha = 0.2) +
+  scale_color_manual(values = c("acfa" = "#CE2931", "acfb" = "#2984CE", "acfc" = "#FFBC47"), name = NULL) +
+  scale_fill_manual(values = c("acfa" = "#CE2931", "acfb" = "#2984CE", "acfc" = "#FFBC47"), name = NULL) +
+  scale_y_continuous(breaks = seq(0, 250, 25), limits = c(0, 250), expand = c(0, 0)) +
+  scale_x_continuous(breaks = seq(2020, 2050, 5), limits = c(2020, 2050), expand = c(0, 0)) +
+  labs(x = "Year", y = "TB prevalence rate (per 100K)") +
+  theme_bw() +
+  theme(legend.position = "none", plot.margin = margin(10, 15, 5, 10, "pt"))
+dev.off()
 
 # TB prevalence rate per scenarios 
 png(here("plots", "00_TBprev01_100.png"), width = 6, height = 5, units = 'in', res = 150)
