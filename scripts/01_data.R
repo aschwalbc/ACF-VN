@@ -8,6 +8,7 @@ library(rio) # Facilitates importing and exporting
 library(here) # Building file paths
 library(tidyverse) # To use tidyverse
 library(naniar) # Visualise missingness
+library(janitor) # Clean dataframe
 
 # 1. Load data ==========
 data <- as.data.table(import(here("data","tbs","data.csv")))
@@ -15,9 +16,8 @@ WPP <- import(here("data","pop","WPP_Pop_1950-2100.csv")) # Population size 1950
 WPPb <- import(here("data","pop","WPP_Births_1950-2100.csv")) # Births 1950-2100
 WPPda <- import(here("data","pop","WPP_Deaths_1950-2021.csv")) # Deaths 1950-2021
 WPPdb <- import(here("data","pop","WPP_Deaths_2022-2100.csv")) # Deaths 2022-2100
-WUP <- import(here("data","pop","WUP_Urban_1950-2050.csv")) # Proportion Urban 1950-2050
-WDI <- import(here("data","pop","WB_WDI.csv")) # GDP World Development Indicators
-WEO <- import(here("data","pop","WEO.csv")) # World Economic Outputs
+WUP <- import(here("data","urb","WUP_Urban_1950-2050.csv")) # Proportion Urban 1950-2050
+WEO <- import(here("data","ses","WEO.csv")) # World Economic Outputs
 
 # 2. TB prevalence survey data ==========
 VN <- data %>% 
@@ -174,7 +174,7 @@ WPP <- WPP %>%
   mutate(mortrate = mort/pop, birthrate = births/pop) 
 rm(WPPb,WPPd)
 
-export(WPP,here("data","ses","WPP.Rdata")) # Save data frame
+export(WPP,here("data","pop","WPP.Rdata")) # Save data frame
 
 WUP <- clean_names(WUP) %>% # Urbanisation data
   filter(index == 115) %>% 
@@ -186,7 +186,7 @@ WUP <- clean_names(WUP) %>% # Urbanisation data
   mutate(rurprop = 1-urbprop, iso3 = "VNM") %>% 
   select(iso3, year, urbprop, rurprop)
 
-export(WUP,here("data","ses","WUP.Rdata")) # Save data frame
+export(WUP,here("data","urb","WUP.Rdata")) # Save data frame
 
 WEO <- WEO %>% # World Economic Output (GDP)
   setNames(WEO[1,]) %>%
