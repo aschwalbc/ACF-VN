@@ -106,10 +106,51 @@ outs_yr <- outs %>%
             lo = quantile(values, 0.025, na.rm = TRUE), 
             hi = quantile(values, 0.975, na.rm = TRUE))
 
+outs_baupost <- data.frame(run = integer(), post = integer(), bautDxs = numeric())
+runs <- unique(outs$run)
+
+for (i in 2025:2050) {
+  tmp <- outs %>%
+    arrange(type, run, time) %>% 
+    filter(type == "base") %>% 
+    filter(time >= i & time == floor(time)) %>% 
+    group_by(run) %>%
+    mutate(bautDxs = cumsum(tDxs)) %>%
+    filter(time == 2050) %>%
+    ungroup() %>%
+    select(run, bautDxs) %>%
+    mutate(post = i) %>%
+    select(run, post, bautDxs)
+  
+  outs_baupost <- bind_rows(outs_baupost, tmp)
+}
+rm(i, runs, tmp)
+
+outs_post <- outs %>% 
+  arrange(type, run, time) %>% 
+  filter(!type == "base") %>% 
+  filter(time >= 2025 & time == floor(time)) %>%
+  mutate(post = as.integer(round) + 2025) %>%
+  filter(time >= post) %>%
+  select(type, run, goal, round, post, time, tDxs) %>% 
+  group_by(type, run, goal, round, post) %>%
+  mutate(cumtDxs = cumsum(tDxs)) %>%
+  ungroup() %>% 
+  filter(time == 2050) %>% 
+  within(rm(tDxs)) %>% 
+  left_join(outs_baupost, by = c('run', 'post')) %>% 
+  mutate(dfcumtDxs = cumtDxs - bautDxs) %>% 
+  select(time, type, run, round, goal, cumtDxs, dfcumtDxs) %>% 
+  pivot_longer(cols = -c(time, type, run, round, goal), names_to = "var", values_to = "values") %>%
+  group_by(time, type, round, goal, var) %>%
+  summarise(val = median(values, na.rm = TRUE), 
+            lo = quantile(values, 0.025, na.rm = TRUE), 
+            hi = quantile(values, 0.975, na.rm = TRUE))
+
 outs <- outs_m %>% 
-  rbind(outs_yr) %>% 
+  rbind(outs_yr, outs_post) %>% 
   arrange(factor(type, levels = c("base", "acfa", "acfb", "acfc")), round, time) 
-rm(outs_m, outs_yr)
+rm(outs_m, outs_yr, outs_baupost, outs_post)
 
 export(outs, here("outputs", "outs", "outs.Rdata"))
 
