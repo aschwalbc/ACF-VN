@@ -16,8 +16,6 @@ WPP <- import(here("data","pop","WPP_Pop_1950-2100.csv")) # Population size 1950
 WPPb <- import(here("data","pop","WPP_Births_1950-2100.csv")) # Births 1950-2100
 WPPda <- import(here("data","pop","WPP_Deaths_1950-2021.csv")) # Deaths 1950-2021
 WPPdb <- import(here("data","pop","WPP_Deaths_2022-2100.csv")) # Deaths 2022-2100
-WUP <- import(here("data","urb","WUP_Urban_1950-2050.csv")) # Proportion Urban 1950-2050
-WEO <- import(here("data","ses","WEO.csv")) # World Economic Outputs
 
 # 2. TB prevalence survey data ==========
 VN <- data %>% 
@@ -35,100 +33,7 @@ VN <- data %>%
          cough2w_surv = case_when(cough2w_surv == 'Tren 2 tuan' ~ 'more than 2w', cough2w_surv == 'Duoi 2 tuan' ~ 'less than 2w'),
          sympt_nf = case_when(sympt_nf == 0 ~ 'no', sympt_nf == 1 ~ 'yes'),
          sympt_surv = case_when(cough == 1 |fever == 1 | weight_loss == 1 | night_sweats == 1 | sputum_c == 1 | blood_sputum_c == 1 ~ 'yes', TRUE ~ 'no')) %>% 
-  #mutate(cough2w_surv = ifelse(cough_surv == 'yes' & is.na(cough2w_surv), 'less than 2w', cough2w_surv)) %>% # fix missingness of cough duration
   select(id, survey_n, sex, age, agegp, stratum, ses, tbcase, cough_surv, cough_nf, cough2w_surv, cough2w_nf, sympt_surv, sympt_nf)
-
-# Missingness of cough duration per stratum and SES status
-table(VN$cough2w_surv, VN$stratum, useNA = 'always')
-
-gg_miss_var(VN, show_pct = TRUE, facet = stratum) + ylim(0,100)
-gg_miss_var(VN, show_pct = TRUE, facet = ses) + ylim(0,100)
-
-N = 100000 # Per 100,000 inhabitants
-
-# Survey 1: 2007-2008
-VNs1 <- (filter(VN, survey_n == 'surv1'))
-popsurv1 <- nrow(VNs1)
-
-nrow(filter(VNs1, tbcase == 'yes')) # Total TB cases
-nrow(filter(VNs1, tbcase == 'yes'))/popsurv1*N # # Total TB cases (per 100k)
-
-# Cough duration (>2w vs <2w)
-nrow(filter(VNs1, tbcase == 'yes' & cough2w_surv == 'more than 2w')) #cTB
-nrow(filter(VNs1, tbcase == 'yes' & cough2w_surv == 'more than 2w'))/popsurv1*N # cTB (per 100k)
-
-nrow(filter(VNs1, tbcase == 'yes' & cough2w_surv == 'less than 2w')) # scTB
-nrow(filter(VNs1, tbcase == 'yes' & cough2w_surv == 'less than 2w'))/popsurv1*N # scTB (per 100k)
-
-# Presence of cough ***
-nrow(filter(VNs1, tbcase == 'yes' & cough_surv == 'yes')) #cTB
-nrow(filter(VNs1, tbcase == 'yes' & cough_surv == 'yes'))/popsurv1*N # cTB (per 100k)
-
-nrow(filter(VNs1, tbcase == 'yes' & cough_surv == 'no')) # scTB
-nrow(filter(VNs1, tbcase == 'yes' & cough_surv == 'no'))/popsurv1*N # scTB (per 100k)
-
-# Presence of symptoms
-nrow(filter(VNs1, tbcase == 'yes' & sympt_surv == 'yes')) #cTB
-nrow(filter(VNs1, tbcase == 'yes' & sympt_surv == 'yes'))/popsurv1*N # cTB (per 100k)
-
-nrow(filter(VNs1, tbcase == 'yes' & sympt_surv == 'no')) # scTB
-nrow(filter(VNs1, tbcase == 'yes' & sympt_surv == 'no'))/popsurv1*N # scTB (per 100k)
-
-nrow(filter(VNs1, tbcase == 'yes' & sympt_nf == 'yes')) #cTB
-nrow(filter(VNs1, tbcase == 'yes' & sympt_nf == 'yes'))/popsurv1*N # cTB (per 100k)
-
-nrow(filter(VNs1, tbcase == 'yes' & sympt_nf == 'no')) # scTB
-nrow(filter(VNs1, tbcase == 'yes' & sympt_nf == 'no'))/popsurv1*N # scTB (per 100k)
-
-# Relative stratum (urban/rural)
-nrow(filter(VNs1, tbcase == 'yes' & cough_surv == 'no' & stratum == 'urban'))/nrow(filter(VNs1, tbcase == 'yes' & cough_surv == 'no' & (stratum == 'urban' | stratum == 'rural')))
-nrow(filter(VNs1, tbcase == 'yes' & cough_surv == 'yes' & stratum == 'urban'))/nrow(filter(VNs1, tbcase == 'yes' & cough_surv == 'yes' & (stratum == 'urban' | stratum == 'rural')))
-
-# Relative stratum (high/low)
-nrow(filter(VNs1, tbcase == 'yes' & cough_surv == 'no' & ses == 'high'))/nrow(filter(VNs1, tbcase == 'yes' & cough_surv == 'no' & (ses == 'high' | ses == 'low')))
-nrow(filter(VNs1, tbcase == 'yes' & cough_surv == 'yes' & ses == 'high'))/nrow(filter(VNs1, tbcase == 'yes' & cough_surv == 'yes' & (ses == 'high' | ses == 'low')))
-
-# Survey 2: 2017-2018
-VNs2 <- (filter(VN, survey_n == 'surv2'))
-popsurv2 <- nrow(VNs2)
-
-nrow(filter(VNs2, tbcase == 'yes')) # Total TB cases
-nrow(filter(VNs2, tbcase == 'yes'))/popsurv1*N # # Total TB cases (per 100k)
-
-# Cough duration (>2w vs <2w)
-nrow(filter(VNs2, tbcase == 'yes' & cough2w_surv == 'more than 2w')) #cTB
-nrow(filter(VNs2, tbcase == 'yes' & cough2w_surv == 'more than 2w'))/popsurv2*N # cTB (per 100k)
-
-nrow(filter(VNs2, tbcase == 'yes' & cough2w_surv == 'less than 2w')) # scTB
-nrow(filter(VNs2, tbcase == 'yes' & cough2w_surv == 'less than 2w'))/popsurv2*N # scTB (per 100k)
-
-# Presence of cough ***
-nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'yes')) #cTB
-nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'yes'))/popsurv2*N # cTB (per 100k)
-
-nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'no')) # scTB
-nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'no'))/popsurv2*N # scTB (per 100k)
-
-# Presence of symptoms
-nrow(filter(VNs2, tbcase == 'yes' & sympt_surv == 'yes')) #cTB
-nrow(filter(VNs2, tbcase == 'yes' & sympt_surv == 'yes'))/popsurv2*N # cTB (per 100k)
-
-nrow(filter(VNs2, tbcase == 'yes' & sympt_surv == 'no')) # scTB
-nrow(filter(VNs2, tbcase == 'yes' & sympt_surv == 'no'))/popsurv2*N # scTB (per 100k)
-
-nrow(filter(VNs2, tbcase == 'yes' & sympt_nf == 'yes')) #cTB
-nrow(filter(VNs2, tbcase == 'yes' & sympt_nf == 'yes'))/popsurv2*N # cTB (per 100k)
-
-nrow(filter(VNs2, tbcase == 'yes' & sympt_nf == 'no')) # scTB
-nrow(filter(VNs2, tbcase == 'yes' & sympt_nf == 'no'))/popsurv2*N # scTB (per 100k)
-
-# Relative stratum (urban/rural)
-nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'no' & stratum == 'urban'))/nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'no' & (stratum == 'urban' | stratum == 'rural')))
-nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'yes' & stratum == 'urban'))/nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'yes' & (stratum == 'urban' | stratum == 'rural')))
-
-# Relative stratum (high/low)
-nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'no' & ses == 'high'))/nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'no' & (ses == 'high' | ses == 'low')))
-nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'yes' & ses == 'high'))/nrow(filter(VNs2, tbcase == 'yes' & cough_surv == 'yes' & (ses == 'high' | ses == 'low')))
 
 # 3. Population and demographics ==========
 WPP <- WPP %>% # Population data
@@ -175,48 +80,3 @@ WPP <- WPP %>%
 rm(WPPb,WPPd)
 
 export(WPP,here("data","pop","WPP.Rdata")) # Save data frame
-
-WUP <- clean_names(WUP) %>% # Urbanisation data
-  filter(index == 115) %>% 
-  select(starts_with("x")) %>%
-  rename_all(~gsub("^x", "", .)) %>% 
-  mutate_all(~ . / 100) %>% 
-  pivot_longer(cols = everything(), names_to = "year", values_to = "urbprop") %>% 
-  filter(year >= 2020) %>% 
-  mutate(rurprop = 1-urbprop, iso3 = "VNM") %>% 
-  select(iso3, year, urbprop, rurprop)
-
-export(WUP,here("data","urb","WUP.Rdata")) # Save data frame
-
-WEO <- WEO %>% # World Economic Output (GDP)
-  setNames(WEO[1,]) %>%
-  slice(2:n()) %>% 
-  clean_names() %>% 
-  rename_all(~gsub("^x", "", .)) %>% 
-  rename(iso3 = iso, var = subject_descriptor) %>% 
-  select(iso3, var, matches("^\\d")) %>% 
-  mutate_at(vars(-iso3, -var), ~as.numeric(gsub(",", "", gsub("\\.", "", ., fixed = TRUE)))) %>% 
-  filter(var == "Gross domestic product per capita, constant prices") %>% 
-  select(-var) %>% 
-  pivot_longer(cols = -iso3, names_to = "year", values_to = "gdp") %>% 
-  mutate(year = as.numeric(year)) %>% 
-  mutate(lowses = NA) %>% 
-  mutate(lowses = case_when(year == 2008 ~ 0.5946, year == 2018 ~ 0.6034, TRUE ~ lowses))
-
-gdpses <- WEO %>% 
-  filter(!is.na(lowses)) %>% 
-  lm(lowses ~ gdp, data = .)
-
-WEO <- WEO %>% 
-  mutate(lowses = predict(gdpses, newdata = .))
-
-sesmodel <- lm(lowses ~ year, data = WEO)
-
-WEO_exp <- data.frame(year = 2029:2050) %>% 
-  mutate(lowses = predict(sesmodel, newdata = .))
-
-GDP <- rbind(select(WEO, c(year, lowses)), WEO_exp) %>% 
-  filter(year >= 2020)
-
-export(GDP, here("data","ses","GDP.Rdata")) # Save data frame
-
