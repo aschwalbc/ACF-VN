@@ -19,7 +19,7 @@ library(tictoc) # Timing of R scripts
 # 1. Parameters ==========
 # 1.1 Baseline parameters (for testing)
 parms = c(
-  beta = 10,        # Contact (per person/year) parameter
+  beta = 9,        # Contact (per person/year) parameter
   kappa = 0.75,     # Relative infectiousness
   infcle = 1.83,    # Infected -> Cleared
   infmin = 0.21,    # Infected -> Minimal
