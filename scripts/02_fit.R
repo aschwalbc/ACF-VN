@@ -124,22 +124,14 @@ hmer_res <- function(params, times, outputs) {
 
 # 3.2 Fitting targets
 targets <- list(
-  TBc2008 = c(202,310),     # TB prevalence (Nguyen et al. Emerg Infect Dis 2021 - Revised)
-  TBc2018 = c(177,290),     # TB prevalence (Nguyen et al. Emerg Infect Dis 2021 - Revised)
-  Mor2000 = c(37.3,87.7),   # TB mortality (Over population aged >= 15yo)
-  Mor2010 = c(22.8,45.7),   # TB mortality (Over population aged >= 15yo)
-  Dxs2010 = c(63.5,95.3),   # TB notifications (Over population aged >= 15yo)
-  Dxs2020 = c(58.5,87.8),   # TB notifications (Over population aged >= 15yo)
-  URs2008 = c(0.192,0.288), # Urban/rural scTB
-  URs2018 = c(0.352,0.528), # Urban/rural scTB
-  URc2008 = c(0.224,0.336), # Urban/rural cTB
-  URc2018 = c(0.344,0.516), # Urban/rural cTB
-  HLs2008 = c(0.304,0.456), # High/low scTB
-  HLs2018 = c(0.376,0.564), # High/low scTB
-  HLc2008 = c(0.256,0.384), # High/low cTB
-  HLc2018 = c(0.36,0.54),   # High/low cTB
-  Spr2008 = c(0.56,0.84),   # Proportion scTB (Emery et al. medRxiv 2022)
-  Spr2018 = c(0.53,0.79))   # Proportion scTB (Emery et al. medRxiv 2022)
+  TBc2007 = c(202,310),     # TB prevalence [Nguyen Emerg Infect Dis 2021 - Revised]
+  TBc2018 = c(177,290),     # TB prevalence [Nguyen Emerg Infect Dis 2021 - Revised]
+  Mor2000 = c(37.3,87.7),   # TB mortality (Over population aged >= 15yo) [WHO GTB]
+  Mor2010 = c(22.8,45.7),   # TB mortality (Over population aged >= 15yo) [WHO GTB]
+  Dxs2010 = c(63.5,95.3),   # TB notifications (Over population aged >= 15yo) [WHO GTB]
+  Dxs2020 = c(58.5,87.8),   # TB notifications (Over population aged >= 15yo) [WHO GTB]
+  Spr2007 = c(0.56,0.84),   # Proportion scTB [Emery eLife 2023]
+  Spr2018 = c(0.53,0.79))   # Proportion scTB [Emery eLife 2023]
 
 targetsdb <- as.data.frame(t(as.data.frame(targets))) # Create dataframe with fitting targets
 targetsdb$var <- substr(rownames(targetsdb),1,3) # Create variable classification
@@ -240,7 +232,7 @@ rm(ini_LHS_train, ini_LHS_val, ini_LHS) # Clean objects
 pb <- progress_bar$new(format = "[:bar] :percent :eta", total = nrow(ini_pts))
 tmp <- list()
 for (i in seq_len(nrow(ini_pts))) {
-  res <- t(apply(ini_pts[i,], 1, hmer_res, c(2000, 2008, 2010, 2018, 2020), c('TBc', 'Mor', 'Dxs', 'Spr', 'URs', 'URc', 'HLs', 'HLc')))
+  res <- t(apply(ini_pts[i,], 1, hmer_res, c(2000, 2007, 2010, 2018, 2020), c('TBc', 'Mor', 'Dxs', 'Spr')))
   tmp[[i]] <- data.frame(res)[, names(targets)]
   pb$tick()  # Advance the progress bar
 }
