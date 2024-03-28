@@ -41,7 +41,7 @@ parms = c(
 
 # 1.2 Parameter ranges
 ranges = list(
-  beta = c(6,30),           # Contact (per person/year) parameter
+  beta = c(6,20),           # Contact (per person/year) parameter
   kappa = c(0.62,1),        # Relative infectiousness [Emery eLife 2023]
   infcle = c(0.93,3.30),    # Infected -> Cleared [Horton PNAS 2023]
   infmin = c(0.04,0.23),    # Infected -> Minimal [Horton PNAS 2023]
@@ -237,12 +237,12 @@ for (i in seq_len(nrow(ini_pts))) {
   pb$tick()  # Advance the progress bar
 }
 wave_res[[1]] <- do.call(rbind, tmp)
-export(wave_res[[1]], here("outputs", "wave_res", "w1_waveres.Rdata"))
+export(wave_res[[1]], here("outputs", "wave_res", "w001_waveres.Rdata"))
 wave[[1]] <- cbind(ini_pts, wave_res[[1]]) # Bind run points and results
-export(wave[[1]], here("outputs", "waves", "w1_wave.Rdata"))
+export(wave[[1]], here("outputs", "waves", "w001_wave.Rdata"))
 rm(pb, tmp, res, i) # Clean objects
 simulator[[1]] <- simulator_plot(wave_res, targets, normalize = TRUE, byhit = TRUE)
-pdf(here("outputs", "simulator", "w1_simulator.pdf"))
+pdf(here("outputs", "simulator", "w001_simulator.pdf"))
 print(simulator[[1]])
 dev.off()
 cat("Model runs completed\n")
@@ -260,12 +260,12 @@ wave_val[[1]] <- wave[[1]][-sample,]
 rm(sample)
 ems[[1]] <- emulator_from_data(wave_train[[1]], names(targets), ranges)
 activeparms[[1]] <- plot_actives(ems[[1]])
-pdf(here("outputs", "activeparms", "w1_activeparms.pdf"))
+pdf(here("outputs", "activeparms", "w001_activeparms.pdf"))
 print(activeparms[[1]])
 dev.off()
 cat("Emulators trained\n")
 
-pdf(here("outputs", "diagnostics", "w1_diagnostics_pre.pdf"))
+pdf(here("outputs", "diagnostics", "w001_diagnostics_pre.pdf"))
 invalid_pts[[1]] <- validation_diagnostics(ems[[1]], validation = wave_val[[1]], targets = targets, plt = TRUE)
 dev.off()
 for (j in 1:length(ems[[1]])) {
@@ -275,7 +275,7 @@ for (j in 1:length(ems[[1]])) {
     misclass <- nrow(classification_diag(ems[[1]][[j]], targets, wave_val[[1]], plt = FALSE))
   }
 }
-pdf(here("outputs", "diagnostics", "w1_diagnostics_post.pdf"))
+pdf(here("outputs", "diagnostics", "w001_diagnostics_post.pdf"))
 invalid_diag[[1]] <- validation_diagnostics(ems[[1]], validation = wave_val[[1]], targets = targets, plt = TRUE)
 dev.off()
 bad.ems <- c()
@@ -288,37 +288,38 @@ for (j in 1:length(ems[[1]])) {
 ems[[1]] <- ems[[1]][!seq_along(ems[[1]]) %in% bad.ems]
 cat("Available emulators:", length(ems[[1]]), "\n")
 cat(names(ems[[1]]),"\n")
-pdf(here("outputs", "diagnostics", "w1_diagnostics_post_badems.pdf"))
+pdf(here("outputs", "diagnostics", "w001_diagnostics_post_badems.pdf"))
 invalid_bad[[1]] <- validation_diagnostics(ems[[1]], validation = wave_val[[1]], targets = targets, plt = TRUE)
 dev.off()
-export(ems[[1]], here("outputs", "ems", "w1_ems.Rdata"))
+export(ems[[1]], here("outputs", "ems", "w001_ems.Rdata"))
 cat("Diagnostics performed\n")
 
 non_imp_pts[[1]] <- generate_new_design(ems[[1]], (10*length(ranges))*2, targets, verbose = TRUE) # Generate new points
-export(non_imp_pts[[1]],here("outputs", "pts", "w1_pts.Rdata")) # Save data frame
+export(non_imp_pts[[1]],here("outputs", "pts", "w001_pts.Rdata")) # Save data frame
 cat("New parameter points generated\n")
 beepr::beep(2)
 
 # 3.5 HMER loop runs
-for (i in 41:100){
-w <- i # Update wave run
+# for (i in 180:180) {
+w <- 180 # Update wave run
 tic()
 cat("Running wave:", w, "\n")
 
 pb <- progress_bar$new(format = "[:bar] :percent :eta", total = nrow(non_imp_pts[[w-1]]))
 tmp <- list()
 for (i in seq_len(nrow(non_imp_pts[[w-1]]))) {
-  res <- t(apply(non_imp_pts[[w-1]][i,], 1, hmer_res, c(2000, 2008, 2010, 2018, 2020), c('TBc', 'Mor', 'Dxs', 'Spr', 'URs', 'URc', 'HLs', 'HLc')))
+  res <- t(apply(non_imp_pts[[w-1]][i,], 1, hmer_res, c(2000, 2007, 2010, 2018, 2020), c('TBc', 'Mor', 'Dxs', 'Spr')))
   tmp[[i]] <- data.frame(res)[, names(targets)]
   pb$tick()  # Advance progress bar
 }
+
 wave_res[[w]] <- do.call(rbind, tmp)
-export(wave_res[[w]], here("outputs", "wave_res", paste("w", w, "_waveres.Rdata", sep = "")))
+export(wave_res[[w]], here("outputs", "wave_res", sprintf("w%03d_waveres.Rdata", w)))
 wave[[w]] <- cbind(non_imp_pts[[w-1]], wave_res[[w]])
-export(wave[[w]], here("outputs", "waves", paste("w", w, "_wave.Rdata", sep = "")))
+export(wave[[w]], here("outputs", "waves", sprintf("w%03d_wave.Rdata", w)))
 rm(pb, tmp, res, i) # Clean objects
 simulator[[w]] <- simulator_plot(wave_res[w], targets, normalize = TRUE, byhit = TRUE)
-pdf(here("outputs", "simulator", paste("w", w, "_simulator.pdf", sep = "")))
+pdf(here("outputs", "simulator", sprintf("w%03d_simulator.pdf", w)))
 print(simulator[[w]])
 dev.off()
 cat("Model runs completed\n")
@@ -337,12 +338,12 @@ wave_val[[w]] <- wave[[w]][-sample,]
 rm(sample)
 ems[[w]] <- emulator_from_data(wave_train[[w]], names(targets), ranges, check.ranges = TRUE)
 activeparms[[w]] <- plot_actives(ems[[w]])
-pdf(here("outputs", "activeparms", paste("w", w, "_activeparms.pdf", sep = "")))
+pdf(here("outputs", "activeparms", sprintf("w%03d_activeparms.pdf", w)))
 print(activeparms[[w]])
 dev.off()
 cat("Emulators trained\n")
 
-pdf(here("outputs", "diagnostics", paste("w", w, "_diagnostics_pre.pdf", sep = "")))
+pdf(here("outputs", "diagnostics", sprintf("w%03d_diagnostics_pre.pdf", w)))
 invalid_pts[[w]] <- validation_diagnostics(ems[[w]], validation = wave_val[[w]], targets = targets, plt = TRUE)
 dev.off()
 for (j in 1:length(ems[[w]])) {
@@ -352,7 +353,7 @@ for (j in 1:length(ems[[w]])) {
     misclass <- nrow(classification_diag(ems[[w]][[j]], targets, wave_val[[w]], plt = FALSE))
   }
 }
-pdf(here("outputs", "diagnostics", paste("w", w, "_diagnostics_post.pdf", sep = "")))
+pdf(here("outputs", "diagnostics", sprintf("w%03d_diagnostics_post.pdf", w)))
 invalid_diag[[w]] <- validation_diagnostics(ems[[w]], validation = wave_val[[w]], targets = targets, plt = TRUE)
 dev.off()
 bad.ems <- c()
@@ -365,17 +366,19 @@ for (j in 1:length(ems[[w]])) {
 ems[[w]] <- ems[[w]][!seq_along(ems[[w]]) %in% bad.ems]
 cat("Available emulators:", length(ems[[w]]), "\n")
 cat(names(ems[[w]]),"\n")
-pdf(here("outputs", "diagnostics", paste("w", w, "_diagnostics_post_badems.pdf", sep = "")))
+pdf(here("outputs", "diagnostics", sprintf("w%03d_diagnostics_post_badems.pdf", w)))
 invalid_bad[[w]] <- validation_diagnostics(ems[[w]], validation = wave_val[[w]], targets = targets, plt = TRUE)
 dev.off()
-export(ems[[w]], here("outputs", "ems", paste("w", w, "_ems.Rdata", sep = "")))
+export(ems[[w]], here("outputs", "ems", sprintf("w%03d_ems.Rdata", w)))
 cat("Diagnostics performed\n")
 
 non_imp_pts[[w]] <- generate_new_design(c(ems[1:w]), (10*length(ranges))*2, targets, verbose = TRUE) # Generate new points
-export(non_imp_pts[[w]],here("outputs", "pts", paste("w", w, "_pts.Rdata", sep = ""))) # Save data frame
+export(non_imp_pts[[w]], here("outputs", "pts", sprintf("w%03d_pts.Rdata", w))) # Save data frame
+plaus_pts <- unique(as.data.frame(do.call("rbind", wave_check)))[1:length(parms)]
+non_imp_pts[[w]] <- rbind(non_imp_pts[[w]], plaus_pts)
 cat("New parameter points generated\n")
 toc()
-}
+# }
 beepr::beep(2)
 
 # 3.6 Reload data
@@ -403,9 +406,29 @@ for (file in data_files) {
   wave[[num]] <- data
 }
 
+# Emulators
+data_files <- list.files(here("outputs","ems"), pattern = "w[0-9]+_ems.Rdata", full.names = TRUE)
+for (file in data_files) {
+  env <- new.env()
+  load(file, env)
+  objs <- mget(ls(env), env)
+  num <- as.integer(gsub("[^0-9]", "", basename(file)))
+  ems[[num]] <- objs
+}
+
+# Wave checks
+for(w in 1:length(wave)) {
+  checks[[w]] <- target_check(wave = wave_res[[w]])
+  runcheck <- do.call(cbind, lapply(1:w, function(i) checks[[i]][["runs"]]))
+  targetcheck <- do.call(cbind, lapply(1:w, function(i) checks[[i]][["targets"]]))
+  wave_check[[w]] <- target_subset(wave[[w]])
+}
+
+rm(data_files, data, file, num, objs, env, w)
+
 # 4. Results ==========
 # Isolate best parameter sets
-plaus_pts <- as.data.frame(do.call("rbind", wave_check))[1:length(parms)]
+plaus_pts <- unique(as.data.frame(do.call("rbind", wave_check)))[1:length(parms)]
 export(plaus_pts, here("outputs", "pts", "fitpts.Rdata")) # Save data frame
 
 pts_fin <- plaus_pts
@@ -418,13 +441,12 @@ rownames(t_parameters) = colnames(parameters) # Set row names
 parameters <- t_parameters # Rename parameters
 rm(t_parameters) # Clean objects
 
-parameters$parameter <- c("beta","kappa","gamma_infcle","lambda_infmin","gamma_minrec","theta_cleinf",
-                          "lambda_minsub","lambda_infsub","gamma_submin","lambda_subcln","gamma_clnsub",
-                          "omega_ini","omega_fin", "iota_cln_ini", "iota_cln_fin", "phi_cln_ini", "phi_cln_fin",
-                          "tau_min","tau_sub","rho_ini","rho_fin","sigma_ini","sigma_fin")
+parameters$parameter <- c("beta", "kappa", "infcle", "infmin", "minrec", "pi", "minsub", "infsub", "submin", "subcln", "clnsub",
+                          "mutb_ini", "mutb_fin", "theta_ini", "theta_fin", "phi_ini", "phi_fin", "rho")
+
 parameters[,c(1,2,3)] <- round(parameters[,c(1,2,3)],3) # Round to 2 decimal places
 table <- data.frame(parameter = parameters$parameter, low  = parameters$`2.5%`, med = parameters$`50%`, hig = parameters$`97.5%`) # Output table
-export(table, here("data","parms.Rdata")) # Save data frame
+export(table, here("data", "fit", "parms.Rdata")) # Save data frame
 
 results <- as.data.frame(apply(pts_fin, 1, ode))[-seq(1,521),] # Runs ODE for each set of points
 results <- as.data.frame(t(apply(results, 1, quantile, probs = quants, na.rm = TRUE))) # Set parameter quantiles
