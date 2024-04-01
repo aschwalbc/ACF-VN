@@ -31,65 +31,65 @@ pop_target <- 1 # Proportion of population targeted for ACF
 pop_reached <- 1 # Proportion of population participating in ACF
 
 # 2.2.1 Xpert Ultra
-xpert_fp_sic <- c(val = 0.04, lo = 0.03, hi = 0.07)
-xpert_fp_rec <- c(val = 0.04, lo = 0.03, hi = 0.07)
-xpert_sens_min <- c(val = 0.04, lo = 0.03, hi = 0.07)
-xpert_sens_sub <- c(val = 0.78, lo = 0.68, hi = 0.86)
-xpert_sens_cln <- c(val = 0.91, lo = 0.86, hi = 0.95)
-xpert_fp_tre <- c(val = 0.12, lo = 0.03, hi = 0.30)
+xpert_fp_sic <- c(lo = 0.03, hi = 0.07)
+xpert_fp_rec <- c(lo = 0.03, hi = 0.07)
+xpert_sens_min <- c(lo = 0.03, hi = 0.07)
+xpert_sens_sub <- c(lo = 0.68, hi = 0.86)
+xpert_sens_cln <- c(lo = 0.86, hi = 0.95)
+xpert_fp_tre <- c(lo = 0.03, hi = 0.30)
 
 # 2.2.2 Chest X-ray
-cxr_fp_sic <- c(val = 0.085, lo = 0.069, hi = 0.134)
-cxr_fp_rec <- c(val = 0.16, lo = 0.14, hi = 0.27)
-cxr_sens_min <- c(val = 0.85, lo = 0.80, hi = 0.90)
-cxr_sens_sub <- c(val = 0.91, lo = 0.90, hi = 0.92)
-cxr_sens_cln <- c(val = 0.91, lo = 0.90, hi = 0.92)
-cxr_fp_tre <- c(val = 0.16, lo = 0.14, hi = 0.27)
+cxr_fp_sic <- c(lo = 0.07, hi = 0.13)
+cxr_fp_rec <- c(lo = 0.07, hi = 0.13)
+cxr_sens_min <- c(lo = 0.77, hi = 0.90)
+cxr_sens_sub <- c(lo = 0.90, hi = 0.92)
+cxr_sens_cln <- c(lo = 0.90, hi = 0.92)
+cxr_fp_tre <- c(lo = 0.48, hi = 0.52)
 
 # 2.2.3 Enhanced Xpert Ultra
-enhxpert_fp_sic <- c(val = 0.0022, lo = 0.0016, hi = 0.0029)
-enhxpert_fp_rec <- c(val = 0.0022, lo = 0.0016, hi = 0.0029)
-enhxpert_sens_min <- c(val = 0.0022, lo = 0.0016, hi = 0.0029)
-enhxpert_sens_sub <- c(val = 0.78, lo = 0.68, hi = 0.86)
-enhxpert_sens_cln <- c(val = 0.91, lo = 0.86, hi = 0.95)
-enhxpert_fp_tre <- c(val = 0.03, lo = 0.01, hi = 0.08)
+enhxpert_fp_sic <- c(lo = 0.0016, hi = 0.0029)
+enhxpert_fp_rec <- c(lo = 0.0016, hi = 0.0029)
+enhxpert_sens_min <- c(lo = 0.0016, hi = 0.0029)
+enhxpert_sens_sub <- c(lo = 0.68, hi = 0.86)
+enhxpert_sens_cln <- c(lo = 0.86, hi = 0.95)
+enhxpert_fp_tre <- c(lo = 0.01, hi = 0.08)
 
 # 2.3 ACF scenarios
 # 2.3.1 ACF Scenario A - Xpert only, Xpert+ get treatment
-acfa <- data.frame(parameter = character(), val = numeric(), lo = numeric(), hi = numeric()) %>% 
-  add_row(parameter = "alpha_sic", val = xpert_fp_sic['val'], lo = xpert_fp_sic['lo'], hi = xpert_fp_sic['hi']) %>% 
-  add_row(parameter = "alpha_rec", val = xpert_fp_rec['val'], lo = xpert_fp_rec['lo'], hi = xpert_fp_rec['hi']) %>% 
-  add_row(parameter = "alpha_min", val = xpert_sens_min['val'], lo = xpert_sens_min['lo'], hi = xpert_sens_min['hi']) %>% 
-  add_row(parameter = "alpha_sub", val = xpert_sens_sub['val'], lo = xpert_sens_sub['lo'], hi = xpert_sens_sub['hi']) %>%
-  add_row(parameter = "alpha_cln", val = xpert_sens_cln['val'], lo = xpert_sens_cln['lo'], hi = xpert_sens_cln['hi']) %>% 
-  add_row(parameter = "alpha_tre", val = xpert_fp_tre['val'], lo = xpert_fp_tre['lo'], hi = xpert_fp_tre['hi']) 
+acfa <- data.frame(parameter = character(), lo = numeric(), hi = numeric()) %>% 
+  add_row(parameter = "alpha_sic", lo = xpert_fp_sic['lo'], hi = xpert_fp_sic['hi']) %>% 
+  add_row(parameter = "alpha_rec", lo = xpert_fp_rec['lo'], hi = xpert_fp_rec['hi']) %>% 
+  add_row(parameter = "alpha_min", lo = xpert_sens_min['lo'], hi = xpert_sens_min['hi']) %>% 
+  add_row(parameter = "alpha_sub", lo = xpert_sens_sub['lo'], hi = xpert_sens_sub['hi']) %>%
+  add_row(parameter = "alpha_cln", lo = xpert_sens_cln['lo'], hi = xpert_sens_cln['hi']) %>% 
+  add_row(parameter = "alpha_tre", lo = xpert_fp_tre['lo'], hi = xpert_fp_tre['hi']) 
 
 # 2.3.2 ACF Scenario B - CXR only, CXR+ get Xpert, Xpert+ get treatment
-acfb <- data.frame(parameter = character(), val = numeric(), lo = numeric(), hi = numeric()) %>% 
-  add_row(parameter = "alpha_sic", val = xpert_fp_sic['val']*cxr_fp_sic['val'], lo = xpert_fp_sic['lo']*cxr_fp_sic['lo'], hi = xpert_fp_sic['hi']*cxr_fp_sic['hi']) %>% 
-  add_row(parameter = "alpha_rec", val = xpert_fp_rec['val']*cxr_fp_rec['val'], lo = xpert_fp_rec['lo']*cxr_fp_rec['lo'], hi = xpert_fp_rec['hi']*cxr_fp_rec['hi']) %>% 
-  add_row(parameter = "alpha_min", val = xpert_sens_min['val']*cxr_sens_min['val'], lo = xpert_sens_min['lo']*cxr_sens_min['lo'], hi = xpert_sens_min['hi']*cxr_sens_min['hi']) %>% 
-  add_row(parameter = "alpha_sub", val = xpert_sens_sub['val']*cxr_sens_sub['val'], lo = xpert_sens_sub['lo']*cxr_sens_sub['lo'], hi = xpert_sens_sub['hi']*cxr_sens_sub['hi']) %>%
-  add_row(parameter = "alpha_cln", val = xpert_sens_cln['val']*cxr_sens_cln['val'], lo = xpert_sens_cln['lo']*cxr_sens_cln['lo'], hi = xpert_sens_cln['hi']*cxr_sens_cln['hi']) %>% 
-  add_row(parameter = "alpha_tre", val = xpert_fp_tre['val']*cxr_fp_tre['val'], lo = xpert_fp_tre['lo']*cxr_fp_tre['lo'], hi = xpert_fp_tre['hi']*cxr_fp_tre['hi'])
+acfb <- data.frame(parameter = character(), lo = numeric(), hi = numeric()) %>% 
+  add_row(parameter = "alpha_sic", lo = xpert_fp_sic['lo']*cxr_fp_sic['lo'], hi = xpert_fp_sic['hi']*cxr_fp_sic['hi']) %>% 
+  add_row(parameter = "alpha_rec", lo = xpert_fp_rec['lo']*cxr_fp_rec['lo'], hi = xpert_fp_rec['hi']*cxr_fp_rec['hi']) %>% 
+  add_row(parameter = "alpha_min", lo = xpert_sens_min['lo']*cxr_sens_min['lo'], hi = xpert_sens_min['hi']*cxr_sens_min['hi']) %>% 
+  add_row(parameter = "alpha_sub", lo = xpert_sens_sub['lo']*cxr_sens_sub['lo'], hi = xpert_sens_sub['hi']*cxr_sens_sub['hi']) %>%
+  add_row(parameter = "alpha_cln", lo = xpert_sens_cln['lo']*cxr_sens_cln['lo'], hi = xpert_sens_cln['hi']*cxr_sens_cln['hi']) %>% 
+  add_row(parameter = "alpha_tre", lo = xpert_fp_tre['lo']*cxr_fp_tre['lo'], hi = xpert_fp_tre['hi']*cxr_fp_tre['hi'])
 
 # 2.3.3 ACF Scenario C - CXR only, CXR+ get treatment
-acfc <- data.frame(parameter = character(), val = numeric(), lo = numeric(), hi = numeric()) %>% 
-  add_row(parameter = "alpha_sic", val = cxr_fp_sic['val'], lo = cxr_fp_sic['lo'], hi = cxr_fp_sic['hi']) %>% 
-  add_row(parameter = "alpha_rec", val = cxr_fp_rec['val'], lo = cxr_fp_rec['lo'], hi = cxr_fp_rec['hi']) %>% 
-  add_row(parameter = "alpha_min", val = cxr_sens_min['val'], lo = cxr_sens_min['lo'], hi = cxr_sens_min['hi']) %>% 
-  add_row(parameter = "alpha_sub", val = cxr_sens_sub['val'], lo = cxr_sens_sub['lo'], hi = cxr_sens_sub['hi']) %>%
-  add_row(parameter = "alpha_cln", val = cxr_sens_cln['val'], lo = cxr_sens_cln['lo'], hi = cxr_sens_cln['hi']) %>% 
-  add_row(parameter = "alpha_tre", val = cxr_fp_tre['val'], lo = cxr_fp_tre['lo'], hi = cxr_fp_tre['hi'])
+acfc <- data.frame(parameter = character(), lo = numeric(), hi = numeric()) %>% 
+  add_row(parameter = "alpha_sic", lo = cxr_fp_sic['lo'], hi = cxr_fp_sic['hi']) %>% 
+  add_row(parameter = "alpha_rec", lo = cxr_fp_rec['lo'], hi = cxr_fp_rec['hi']) %>% 
+  add_row(parameter = "alpha_min", lo = cxr_sens_min['lo'], hi = cxr_sens_min['hi']) %>% 
+  add_row(parameter = "alpha_sub", lo = cxr_sens_sub['lo'], hi = cxr_sens_sub['hi']) %>%
+  add_row(parameter = "alpha_cln", lo = cxr_sens_cln['lo'], hi = cxr_sens_cln['hi']) %>% 
+  add_row(parameter = "alpha_tre", lo = cxr_fp_tre['lo'], hi = cxr_fp_tre['hi'])
 
 # 2.3.4 ACF Scenario D - Enhanced Xpert only, Xpert+ get treatment *Same as ACF Scenario A*
-acfd <- data.frame(parameter = character(), val = numeric(), lo = numeric(), hi = numeric()) %>% 
-  add_row(parameter = "alpha_sic", val = enhxpert_fp_sic['val'], lo = enhxpert_fp_sic['lo'], hi = enhxpert_fp_sic['hi']) %>% 
-  add_row(parameter = "alpha_rec", val = enhxpert_fp_rec['val'], lo = enhxpert_fp_rec['lo'], hi = enhxpert_fp_rec['hi']) %>% 
-  add_row(parameter = "alpha_min", val = enhxpert_sens_min['val'], lo = enhxpert_sens_min['lo'], hi = enhxpert_sens_min['hi']) %>% 
-  add_row(parameter = "alpha_sub", val = enhxpert_sens_sub['val'], lo = enhxpert_sens_sub['lo'], hi = enhxpert_sens_sub['hi']) %>%
-  add_row(parameter = "alpha_cln", val = enhxpert_sens_cln['val'], lo = enhxpert_sens_cln['lo'], hi = enhxpert_sens_cln['hi']) %>% 
-  add_row(parameter = "alpha_tre", val = enhxpert_fp_tre['val'], lo = enhxpert_fp_tre['lo'], hi = enhxpert_fp_tre['hi']) 
+acfd <- data.frame(parameter = character(), lo = numeric(), hi = numeric()) %>% 
+  add_row(parameter = "alpha_sic", lo = enhxpert_fp_sic['lo'], hi = enhxpert_fp_sic['hi']) %>% 
+  add_row(parameter = "alpha_rec", lo = enhxpert_fp_rec['lo'], hi = enhxpert_fp_rec['hi']) %>% 
+  add_row(parameter = "alpha_min", lo = enhxpert_sens_min['lo'], hi = enhxpert_sens_min['hi']) %>% 
+  add_row(parameter = "alpha_sub", lo = enhxpert_sens_sub['lo'], hi = enhxpert_sens_sub['hi']) %>%
+  add_row(parameter = "alpha_cln", lo = enhxpert_sens_cln['lo'], hi = enhxpert_sens_cln['hi']) %>% 
+  add_row(parameter = "alpha_tre", lo = enhxpert_fp_tre['lo'], hi = enhxpert_fp_tre['hi']) 
 
 rm(list = ls(pattern = "^(xpert|cxr|enh)"))
 
@@ -217,18 +217,26 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
         tMor    = (mutb * CLN), # Clinical TB mortality per time
         rDxs    = ((theta * CLN) / PopT * 1e5), # Notifications cTB per time in adults (per 100k)
         tDxs    = (theta * CLN), # Total notifications cTB per time in adults
-        tFPos   = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * ((alpha_sic * (SUS + INF + CLE)) + (alpha_rec * REC) + (alpha_tre * (TRE)))), # FP diagnosed
-        tTPos   = ((acf(floor(times)) * ((pop_target * pop_reached * prop_sputum * (alpha_min * MIN)) + ((pop_target * pop_reached) * ((alpha_sub * SUB) + (alpha_cln * CLN)))))), # TP diagnosed
+        tFP     = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * ((alpha_sic * (SUS + INF + CLE)) + (alpha_rec * REC) + (alpha_tre * (TRE)))), # FP diagnosed
+        tTPM    = (acf(floor(times)) * (pop_target * pop_reached * prop_sputum * (alpha_min * MIN))), # TP minimal diagnosed
+        tTPI    = (acf(floor(times)) * (pop_target * pop_reached * ((alpha_sub * SUB) + (alpha_cln * CLN)))), # TP subclinical + clinical diagnosed
         tScrn   = ((acf(floor(times))) * (((pop_target * pop_reached * prop_sputum) * (SUS + INF + CLE + REC + MIN + TRE)) + ((pop_target * pop_reached) * (SUB + CLN)))), # Total screened
         cBAUs   = (((1-mdr) * (theta * CLN)) * screen_bau[["dstb"]]), # Costs BAU DS-TB
         cBAUr   = (((mdr) * (theta * CLN)) * screen_bau[["drtb"]]), # Costs BAU DR-TB
         cACF    = (((acf(floor(times))) * (((pop_target * pop_reached * prop_sputum) * (SUS + INF + CLE + REC + MIN + TRE)) + ((pop_target * pop_reached) * (SUB + CLN)))) * cm_screen_acf), # Cost ACF
+        cACFND  = (((acf(floor(times))) * ((pop_target * pop_reached * prop_sputum) * (SUS + INF + CLE + REC + TRE))) * cm_screen_acf), # Cost ACF non-disease state
+        cACFM   = (((acf(floor(times))) * ((pop_target * pop_reached * prop_sputum * MIN))) * cm_screen_acf), # Cost ACF minimal state
+        cACFI   = (((acf(floor(times))) * ((pop_target * pop_reached) * (SUB + CLN))) * cm_screen_acf), # Cost ACF infectious state
         cRxBAUs = (((1-mdr) * (theta * CLN)) * tb_rx[["dstb"]]), # Costs treatment BAU DS-TB
         cRxBAUr = (((mdr) * (theta * CLN)) * tb_rx[["drtb"]]), # Costs treatment BAU DR-TB
-        cRxTPs  = (((1-mdr) * ((acf(floor(times)) * ((pop_target * pop_reached * prop_sputum * (alpha_min * MIN)) + ((pop_target * pop_reached) * ((alpha_sub * SUB) + (alpha_cln * CLN))))))) * tb_rx[["dstb"]]), # Cost treatment true positives DS-TB
-        cRxTPr  = (((mdr) * ((acf(floor(times)) * ((pop_target * pop_reached * prop_sputum * (alpha_min * MIN)) + ((pop_target * pop_reached) * ((alpha_sub * SUB) + (alpha_cln * CLN))))))) * tb_rx[["drtb"]]), # Cost treatment true positives DR-TB
         cRxFPs  = (((1-mdr) * ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * ((alpha_sic * (SUS + INF + CLE)) + (alpha_rec * REC) + (alpha_tre * (TRE))))) * tb_rx[["dstb"]]), # Cost treatment false positives DS-TB
         cRxFPr  = (((mdr) * ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * ((alpha_sic * (SUS + INF + CLE)) + (alpha_rec * REC) + (alpha_tre * (TRE))))) * tb_rx[["drtb"]]), # Cost treatment false positives DR-TB
+        cRxTPs  = (((1-mdr) * ((acf(floor(times)) * ((pop_target * pop_reached * prop_sputum * (alpha_min * MIN)) + ((pop_target * pop_reached) * ((alpha_sub * SUB) + (alpha_cln * CLN))))))) * tb_rx[["dstb"]]), # Cost treatment true positives DS-TB
+        cRxTPr  = (((mdr) * ((acf(floor(times)) * ((pop_target * pop_reached * prop_sputum * (alpha_min * MIN)) + ((pop_target * pop_reached) * ((alpha_sub * SUB) + (alpha_cln * CLN))))))) * tb_rx[["drtb"]]), # Cost treatment true positives DR-TB
+        cRxTPMs  = (((1-mdr) * (acf(floor(times)) * (pop_target * pop_reached * prop_sputum * (alpha_min * MIN)))) * tb_rx[["dstb"]]), # Cost treatment true positives minimal DS-TB
+        cRxTPMr  = (((mdr) * (acf(floor(times)) * (pop_target * pop_reached * prop_sputum * (alpha_min * MIN)))) * tb_rx[["drtb"]]), # Cost treatment true positives minimal DR-TB
+        cRxTPIs  = (((1-mdr) * (acf(floor(times)) * (pop_target * pop_reached * ((alpha_sub * SUB) + (alpha_cln * CLN))))) * tb_rx[["dstb"]]), # Cost treatment true infectious positives DS-TB
+        cRxTPIr  = (((mdr) * (acf(floor(times)) * (pop_target * pop_reached * ((alpha_sub * SUB) + (alpha_cln * CLN))))) * tb_rx[["drtb"]]), # Cost treatment true infectious positives DR-TB
         DALYs   = (daly(times) * (subcln * SUB)), # DALY estimates
         ARI     = ((beta / PopT) * ((kappa * SUB) + CLN)))) # ARI
     })
@@ -262,31 +270,30 @@ acf_year <- list(
   "01" = 2025,
   "02" = seq(2025, 2026, 1),
   "03" = seq(2025, 2027, 1),
-  "05" = seq(2025, 2029, 1),
   "06" = seq(2025, 2030, 1),
+  "07" = seq(2025, 2031, 1),
   "11" = seq(2025, 2035, 1),
-  "13" = seq(2025, 2037, 1))
+  "12" = seq(2025, 2036, 1))
 
 outacfa <- list()
 outacfb <- list()
 outacfc <- list()
 outacfd <- list()
-options(warn = 2)
 
 for (j in names(acf_year)) {
   rounds <- acf_year[[j]]
   print(names(acf_year[j]))
   
-  if (j %in% c("02", "05", "11")) {
+  if (j %in% c("03", "06", "11")) {
     outacfa[[j]] <- list()
   }
-  if (j %in% c("02", "06", "13")) {
+  if (j %in% c("03", "07", "12")) {
     outacfb[[j]] <- list()
   }
   if (j %in% c("01", "02", "03")) {
     outacfc[[j]] <- list()
   }
-  if (j %in% c("02", "05", "11")) {
+  if (j %in% c("03", "06", "11")) {
     outacfd[[j]] <- list()
   }
   
@@ -296,12 +303,12 @@ for (j in names(acf_year)) {
     curr_parms <- as.data.frame(parms[i,])
     curr_base <- as.data.frame(base[i,-1])
     
-    if (j %in% c("02", "05", "11")) {
+    if (j %in% c("03", "06", "11")) {
       outacfa[[j]][[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfa, acf_times = acf_year[[j]]))
       outacfa[[j]][[i]] <- outacfa[[j]][[i]] %>% mutate(type = 'acfa', run = i, round = j)
     }
     
-    if (j %in% c("02", "06", "13")) {
+    if (j %in% c("03", "07", "12")) {
       outacfb[[j]][[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfb, acf_times = acf_year[[j]]))
       outacfb[[j]][[i]] <- outacfb[[j]][[i]] %>% mutate(type = 'acfb', run = i, round = j)
     }
@@ -311,7 +318,7 @@ for (j in names(acf_year)) {
       outacfc[[j]][[i]] <- outacfc[[j]][[i]] %>% mutate(type = 'acfc', run = i, round = j)
     }
     
-    if (j %in% c("02", "05", "11")) {
+    if (j %in% c("03", "06", "11")) {
       outacfd[[j]][[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfd, acf_times = acf_year[[j]]))
       outacfd[[j]][[i]] <- outacfd[[j]][[i]] %>% mutate(type = 'acfd', run = i, round = j)
     }
@@ -337,7 +344,6 @@ for (k in 1:3) {
   assign(acfd_name, do.call(rbind, outacfd[[k]]))
   export(get(acfd_name), here("outputs", "results", paste0(acfd_name, ".Rdata")))
 }
-options(warn = 1)
 
 # 4.3 ACT3 comparison
 act3 <- list()
