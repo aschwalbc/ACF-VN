@@ -444,7 +444,7 @@ rm(t_parameters) # Clean objects
 parameters$parameter <- c("beta", "kappa", "infcle", "infmin", "minrec", "pi", "minsub", "infsub", "submin", "subcln", "clnsub",
                           "mutb_ini", "mutb_fin", "theta_ini", "theta_fin", "phi_ini", "phi_fin", "rho")
 
-parameters[,c(1,2,3)] <- round(parameters[,c(1,2,3)],3) # Round to 2 decimal places
+parameters[,c(1,2,3)] <- round(parameters[,c(1,2,3)],2) # Round to 2 decimal places
 table <- data.frame(parameter = parameters$parameter, low  = parameters$`2.5%`, med = parameters$`50%`, hig = parameters$`97.5%`) # Output table
 export(table, here("data", "fit", "parms.Rdata")) # Save data frame
 
