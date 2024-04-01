@@ -42,6 +42,9 @@ prpdf <- (smp2 - smp1) / smp1
 
 summary(prpdf)
 
+inty1inty4 <- data.frame(type = 'IntY1-IntY4',time = 2028, val = abs(summary(prpdf)[[3]]),
+                         lo = abs(summary(prpdf)[[5]]), hi = abs(summary(prpdf)[[2]]))
+
 # TB prevalence decline (Int Y1 vs Ctrl Y4)
 filter(act3, (group == 'int' & year == 1) | (group == 'ctrl' & year == 4))
 
@@ -63,9 +66,13 @@ prpdf <- (smp2 - smp1) / smp1
 
 summary(prpdf)
 
+inty1ctrly4 <- data.frame(type = 'IntY1-CtrlY4',time = 2028, val = abs(summary(prpdf)[[3]]),
+                         lo = abs(summary(prpdf)[[5]]), hi = abs(summary(prpdf)[[2]]))
+
 # Comparison graph
 act <- import(here("outputs","act3","act3.Rdata"))
 base <- import(here("outputs","results","r00_base.Rdata"))
+comp <- rbind(inty1inty4, inty1ctrly4)
 
 df <- act %>% 
   rbind(base) %>% 
@@ -115,4 +122,19 @@ ggplot() +
   theme(legend.position = 'none', plot.margin = margin(10,15,5,10,"pt"), panel.grid.minor.x = element_blank())
 dev.off()
 
-              
+tiff(here("plots","S00_act3.tiff"), width = 6, height = 5, units = 'in', res = 150)
+ggplot() +
+  geom_line(df, mapping = aes(x = time, y = val, colour = type)) + 
+  geom_ribbon(df, mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  scale_color_manual(values = c("#CE2931", "#1D2D5F","#636363","#182C25"), labels = c('Xpert-only', 'BAU','IntY1-CtrlY4','IntY1-IntY4')) +
+  scale_fill_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
+  scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0, 100)) +
+  scale_x_continuous(breaks = seq(2020,2050,1), limits = c(2020,2050), expand = c(0,0)) +
+  coord_cartesian(xlim = c(2025, 2035), ylim = c(0, 1)) + 
+  labs(x = "Year", y = "TB prevalence proportional reduction") +
+  geom_rect(aes(xmin = 2025, xmax = 2028, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) + 
+  geom_point(data = comp, aes(x = time, y = 1 - val, colour = type), shape = 17) +
+  geom_errorbar(data = comp, aes(x = time, ymin = 1 - hi, ymax = 1 - lo, colour = type), width = 0.5) + 
+  theme_bw() +
+  theme(legend.position = 'none', plot.margin = margin(10,15,5,10,"pt"), panel.grid.minor.x = element_blank())
+dev.off()          
