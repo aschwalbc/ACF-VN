@@ -217,7 +217,9 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
         tMor    = (mutb * CLN), # Clinical TB mortality per time
         rDxs    = ((theta * CLN) / PopT * 1e5), # Notifications cTB per time in adults (per 100k)
         tDxs    = (theta * CLN), # Total notifications cTB per time in adults
+        tInf    = (((beta / PopT) * ((kappa * SUB) + CLN)) * (SUS + CLE + (pi * REC) + (rho * TRE))), # Total infections
         tFP     = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * ((alpha_sic * (SUS + INF + CLE)) + (alpha_rec * REC) + (alpha_tre * (TRE)))), # FP diagnosed
+        tTP     = ((acf(floor(times))) * ((pop_target * pop_reached * prop_sputum * (alpha_min * MIN)) + (pop_target * pop_reached * ((alpha_sub * SUB) + (alpha_cln * CLN))))), # TP diagnosed
         tTPM    = (acf(floor(times)) * (pop_target * pop_reached * prop_sputum * (alpha_min * MIN))), # TP minimal diagnosed
         tTPI    = (acf(floor(times)) * (pop_target * pop_reached * ((alpha_sub * SUB) + (alpha_cln * CLN)))), # TP subclinical + clinical diagnosed
         tScrn   = ((acf(floor(times))) * (((pop_target * pop_reached * prop_sputum) * (SUS + INF + CLE + REC + MIN + TRE)) + ((pop_target * pop_reached) * (SUB + CLN)))), # Total screened
