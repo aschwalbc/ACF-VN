@@ -300,8 +300,8 @@ cat("New parameter points generated\n")
 beepr::beep(2)
 
 # 3.5 HMER loop runs
-# for (i in 180:180) {
-w <- 180 # Update wave run
+# for (i in 185:186) {
+w <- 188 # Update wave run
 tic()
 cat("Running wave:", w, "\n")
 
@@ -375,7 +375,7 @@ cat("Diagnostics performed\n")
 non_imp_pts[[w]] <- generate_new_design(c(ems[1:w]), (10*length(ranges))*2, targets, verbose = TRUE) # Generate new points
 export(non_imp_pts[[w]], here("outputs", "pts", sprintf("w%03d_pts.Rdata", w))) # Save data frame
 plaus_pts <- unique(as.data.frame(do.call("rbind", wave_check)))[1:length(parms)]
-non_imp_pts[[w]] <- rbind(non_imp_pts[[w]], plaus_pts)
+non_imp_pts[[w]] <- unique(rbind(non_imp_pts[[w]], plaus_pts))
 cat("New parameter points generated\n")
 toc()
 # }
@@ -431,7 +431,7 @@ rm(data_files, data, file, num, objs, env, w)
 plaus_pts <- unique(as.data.frame(do.call("rbind", wave_check)))[1:length(parms)]
 export(plaus_pts, here("outputs", "pts", "fitpts.Rdata")) # Save data frame
 
-pts_fin <- plaus_pts
+pts_fin <- plaus_pts[1:1000,]
 
 quants <- c(0.025,0.5,0.975) # Set quantiles
 parameters <- apply(pts_fin, 2, quantile, probs = quants, na.rm = TRUE) # Set parameter quantiles
