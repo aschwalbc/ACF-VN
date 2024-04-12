@@ -35,4 +35,4 @@ po/*~
 rsconnect/
 .DS_Store
 PGPH
-plots/
+plots
