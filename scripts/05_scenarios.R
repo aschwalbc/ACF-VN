@@ -100,9 +100,27 @@ nu <- approxfun(WPP$year, WPP$birthrate, method = 'linear', rule = 2)
 rm(WPP)
 
 # 2.7.2 Cost data
-screen_bau <- c(dstb = 104, drtb = 500) # Passive case-finding
-screen_acf <- c(acfa = 8, acfb = 1.7, acfc = 1, acfd = 8) # ACF per algorithm
-tb_rx <- c(dstb = 81, drtb = 973) # TB treatment
+gamma_dist <- function(mean, sdpct = 0.2) {
+  sd <- mean * sdpct
+  varc <- sd^2
+  shape <- mean^2 / varc
+  scale <- varc / mean 
+  return(c(shape = shape, scale = scale))
+}
+
+# 2.7.2.1 Passive case-finding
+scr_bau_dstb <- gamma_dist(104)
+scr_bau_drtb <- gamma_dist(500)
+
+# 2.7.2.2 Active case-finding per algorithm
+scr_acfa <- gamma_dist(8)
+scr_acfb <- gamma_dist(1.7)
+scr_acfc <- gamma_dist(1)
+scr_acfd <- gamma_dist(8)
+
+# 2.7.2.3 TB treatment
+tb_rx_dstb <- gamma_dist(81)
+tb_rx_drtb <- gamma_dist(973)
 
 # 2.7.3 DALYs
 daly_lo <- approxfun(DALYs$year, DALYs$lo, method = 'linear', rule = 2)
@@ -161,16 +179,24 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
     interv_name <- deparse(substitute(interv))
     
     if(interv_name == "acfa") {
-      cm_screen_acf <- screen_acf[["acfa"]]
+      cm_screen_acf <- rgamma(n = 1, shape = scr_acfa[['shape']], scale = scr_acfa[['scale']])
     } else if(interv_name == "acfb") {
-      cm_screen_acf <- screen_acf[["acfb"]]
+      cm_screen_acf <- rgamma(n = 1, shape = scr_acfb[['shape']], scale = scr_acfb[['scale']])
     } else if(interv_name == "acfc") {
-      cm_screen_acf <- screen_acf[["acfc"]]
+      cm_screen_acf <- rgamma(n = 1, shape = scr_acfc[['shape']], scale = scr_acfc[['scale']])
     } else if(interv_name == "acfd") {
-      cm_screen_acf <- screen_acf[["acfd"]]
+      cm_screen_acf <- rgamma(n = 1, shape = scr_acfd[['shape']], scale = scr_acfd[['scale']])
     }
   }
   
+  # BAU costs
+  bau_dstb <- rgamma(n = 1, shape = scr_bau_dstb[['shape']], scale = scr_bau_dstb[['scale']])
+  bau_drtb <- rgamma(n = 1, shape = scr_bau_drtb[['shape']], scale = scr_bau_drtb[['scale']])
+  
+  # Rx costs
+  rx_dstb <- rgamma(n = 1, shape = tb_rx_dstb[['shape']], scale = tb_rx_dstb[['scale']])
+  rx_drtb <- rgamma(n = 1, shape = tb_rx_drtb[['shape']], scale = tb_rx_drtb[['scale']])
+
   # MDR TB
   mdr <- runif(1, min = mdr_prop[["lo"]], max = mdr_prop[["hi"]])
   
@@ -223,22 +249,22 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
         tTPM    = (acf(floor(times)) * (pop_target * pop_reached * prop_sputum * (alpha_min * MIN))), # TP minimal diagnosed
         tTPI    = (acf(floor(times)) * (pop_target * pop_reached * ((alpha_sub * SUB) + (alpha_cln * CLN)))), # TP subclinical + clinical diagnosed
         tScrn   = ((acf(floor(times))) * (((pop_target * pop_reached * prop_sputum) * (SUS + INF + CLE + REC + MIN + TRE)) + ((pop_target * pop_reached) * (SUB + CLN)))), # Total screened
-        cBAUs   = (((1-mdr) * (theta * CLN)) * screen_bau[["dstb"]]), # Costs BAU DS-TB
-        cBAUr   = (((mdr) * (theta * CLN)) * screen_bau[["drtb"]]), # Costs BAU DR-TB
+        cBAUs   = (((1-mdr) * (theta * CLN)) * bau_dstb), # Costs BAU DS-TB
+        cBAUr   = (((mdr) * (theta * CLN)) * bau_drtb), # Costs BAU DR-TB
         cACF    = (((acf(floor(times))) * (((pop_target * pop_reached * prop_sputum) * (SUS + INF + CLE + REC + MIN + TRE)) + ((pop_target * pop_reached) * (SUB + CLN)))) * cm_screen_acf), # Cost ACF
         cACFND  = (((acf(floor(times))) * ((pop_target * pop_reached * prop_sputum) * (SUS + INF + CLE + REC + TRE))) * cm_screen_acf), # Cost ACF non-disease state
         cACFM   = (((acf(floor(times))) * ((pop_target * pop_reached * prop_sputum * MIN))) * cm_screen_acf), # Cost ACF minimal state
         cACFI   = (((acf(floor(times))) * ((pop_target * pop_reached) * (SUB + CLN))) * cm_screen_acf), # Cost ACF infectious state
-        cRxBAUs = (((1-mdr) * (theta * CLN)) * tb_rx[["dstb"]]), # Costs treatment BAU DS-TB
-        cRxBAUr = (((mdr) * (theta * CLN)) * tb_rx[["drtb"]]), # Costs treatment BAU DR-TB
-        cRxFPs  = (((1-mdr) * ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * ((alpha_sic * (SUS + INF + CLE)) + (alpha_rec * REC) + (alpha_tre * (TRE))))) * tb_rx[["dstb"]]), # Cost treatment false positives DS-TB
-        cRxFPr  = (((mdr) * ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * ((alpha_sic * (SUS + INF + CLE)) + (alpha_rec * REC) + (alpha_tre * (TRE))))) * tb_rx[["drtb"]]), # Cost treatment false positives DR-TB
-        cRxTPs  = (((1-mdr) * ((acf(floor(times)) * ((pop_target * pop_reached * prop_sputum * (alpha_min * MIN)) + ((pop_target * pop_reached) * ((alpha_sub * SUB) + (alpha_cln * CLN))))))) * tb_rx[["dstb"]]), # Cost treatment true positives DS-TB
-        cRxTPr  = (((mdr) * ((acf(floor(times)) * ((pop_target * pop_reached * prop_sputum * (alpha_min * MIN)) + ((pop_target * pop_reached) * ((alpha_sub * SUB) + (alpha_cln * CLN))))))) * tb_rx[["drtb"]]), # Cost treatment true positives DR-TB
-        cRxTPMs  = (((1-mdr) * (acf(floor(times)) * (pop_target * pop_reached * prop_sputum * (alpha_min * MIN)))) * tb_rx[["dstb"]]), # Cost treatment true positives minimal DS-TB
-        cRxTPMr  = (((mdr) * (acf(floor(times)) * (pop_target * pop_reached * prop_sputum * (alpha_min * MIN)))) * tb_rx[["drtb"]]), # Cost treatment true positives minimal DR-TB
-        cRxTPIs  = (((1-mdr) * (acf(floor(times)) * (pop_target * pop_reached * ((alpha_sub * SUB) + (alpha_cln * CLN))))) * tb_rx[["dstb"]]), # Cost treatment true infectious positives DS-TB
-        cRxTPIr  = (((mdr) * (acf(floor(times)) * (pop_target * pop_reached * ((alpha_sub * SUB) + (alpha_cln * CLN))))) * tb_rx[["drtb"]]), # Cost treatment true infectious positives DR-TB
+        cRxBAUs = (((1-mdr) * (theta * CLN)) * rx_dstb), # Costs treatment BAU DS-TB
+        cRxBAUr = (((mdr) * (theta * CLN)) * rx_drtb), # Costs treatment BAU DR-TB
+        cRxFPs  = (((1-mdr) * ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * ((alpha_sic * (SUS + INF + CLE)) + (alpha_rec * REC) + (alpha_tre * (TRE))))) * rx_dstb), # Cost treatment false positives DS-TB
+        cRxFPr  = (((mdr) * ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * ((alpha_sic * (SUS + INF + CLE)) + (alpha_rec * REC) + (alpha_tre * (TRE))))) * rx_drtb), # Cost treatment false positives DR-TB
+        cRxTPs  = (((1-mdr) * ((acf(floor(times)) * ((pop_target * pop_reached * prop_sputum * (alpha_min * MIN)) + ((pop_target * pop_reached) * ((alpha_sub * SUB) + (alpha_cln * CLN))))))) * rx_dstb), # Cost treatment true positives DS-TB
+        cRxTPr  = (((mdr) * ((acf(floor(times)) * ((pop_target * pop_reached * prop_sputum * (alpha_min * MIN)) + ((pop_target * pop_reached) * ((alpha_sub * SUB) + (alpha_cln * CLN))))))) * rx_drtb), # Cost treatment true positives DR-TB
+        cRxTPMs  = (((1-mdr) * (acf(floor(times)) * (pop_target * pop_reached * prop_sputum * (alpha_min * MIN)))) * rx_dstb), # Cost treatment true positives minimal DS-TB
+        cRxTPMr  = (((mdr) * (acf(floor(times)) * (pop_target * pop_reached * prop_sputum * (alpha_min * MIN)))) * rx_drtb), # Cost treatment true positives minimal DR-TB
+        cRxTPIs  = (((1-mdr) * (acf(floor(times)) * (pop_target * pop_reached * ((alpha_sub * SUB) + (alpha_cln * CLN))))) * rx_dstb), # Cost treatment true infectious positives DS-TB
+        cRxTPIr  = (((mdr) * (acf(floor(times)) * (pop_target * pop_reached * ((alpha_sub * SUB) + (alpha_cln * CLN))))) * rx_drtb), # Cost treatment true infectious positives DR-TB
         DALYs   = (daly(times) * (subcln * SUB)), # DALY estimates
         ARI     = ((beta / PopT) * ((kappa * SUB) + CLN)))) # ARI
     })
