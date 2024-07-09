@@ -202,15 +202,16 @@ filter(outini, var == 'rInc') # TB incidence rate
 filter(outini, var == 'rMor') # TB mortality rate
 
 outfin <- outs %>% 
-  filter(time == 2050 & 
-           ((type == 'acfa' & round == '03') | (type == 'acfa' & round == '06') | (type == 'acfa' & round == '11') |
-            (type == 'acfb' & round == '03') | (type == 'acfb' & round == '07') | (type == 'acfb' & round == '12') | 
-            (type == 'acfc' & round == '01') | (type == 'acfc' & round == '02') | (type == 'acfc' & round == '03') |
-            (type == 'acfd' & round == '03') | (type == 'acfd' & round == '06') | (type == 'acfd' & round == '11')))
+  filter((type == 'acfa' & round == '03') | (type == 'acfa' & round == '06') | (type == 'acfa' & round == '11') |
+           (type == 'acfb' & round == '03') | (type == 'acfb' & round == '07') | (type == 'acfb' & round == '12') | 
+           (type == 'acfc' & round == '01') | (type == 'acfc' & round == '02') | (type == 'acfc' & round == '03') |
+           (type == 'acfd' & round == '03') | (type == 'acfd' & round == '06') | (type == 'acfd' & round == '11'))
 
 filter(outfin, var == 'dfcumInc') # TB incidence averted 
 filter(outfin, var == 'dfcumMor') # TB mortality averted
 filter(outfin, var == 'dfcumInf') # Mtb infections averted
+filter(outfin, var == 'cumDALYs') # Total DALYs
+filter(outfin, var == 'cumcAll') # All costs
 filter(outfin, var == 'cumcACF') # Total costs of ACF screening
 filter(outfin, var == 'cumcCF') # Total costs of case finding
 filter(outfin, var == 'cumTP') # Total true positives in ACF
