@@ -31,7 +31,7 @@ pop_target <- 1 # Proportion of population targeted for ACF
 pop_reached <- 1 # Proportion of population participating in ACF
 
 # 2.2.1 Xpert Ultra
-xpert_fp_sic <- c(lo = 0.03, hi = 0.07)
+xpert_fp_sic <- c(lo = 0.005, hi = 0.008)
 xpert_fp_rec <- c(lo = 0.03, hi = 0.07)
 xpert_sens_min <- c(lo = 0.03, hi = 0.07)
 xpert_sens_sub <- c(lo = 0.68, hi = 0.86)
