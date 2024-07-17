@@ -113,8 +113,8 @@ scr_bau_dstb <- gamma_dist(104)
 scr_bau_drtb <- gamma_dist(500)
 
 # 2.7.2.2 Active case-finding per algorithm
-scr_acfa <- gamma_dist(8) # Normal = 8USD - Sens. analysis = 3USD
-scr_acfb <- gamma_dist(1.7) # Normal = 1.7USD - Sens. analysis = 1.3USD
+scr_acfa <- gamma_dist(8) # Normal = 8USD - Sens. analysis = 3.8USD
+scr_acfb <- gamma_dist(1.7) # Normal = 1.7USD - Sens. analysis = 1.4USD
 scr_acfc <- gamma_dist(1.2) # Normal = 1.2USD - Sens. analysis = 1.2USD
 scr_acfd <- gamma_dist(8) # Normal = 8USD - Sens. analysis = 3USD
 
