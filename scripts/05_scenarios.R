@@ -13,7 +13,7 @@ library(progress) # Displays progress bar
 
 # 1. Load data ==========
 parms <- import(here("outputs","pts","fitpts.Rdata"))[1:1000,]
-parms <- parms %>% sample_frac(0.2)
+# parms <- parms %>% sample_frac(0.2)
 WPP <- import(here("data","pop","WPP.Rdata"))
 base <- import(here("data","fit","base.Rdata"))
 DALYs <- import(here("docs","dalys","DALYs.xlsx"))
@@ -98,9 +98,9 @@ scr_bau_drtb <- gamma_dist(500)
 
 # 2.7.2.2 Active case-finding per algorithm
 scr_acfa <- gamma_dist(8)
-scr_acfax <- gamma_dist(3.8)
+scr_acfax <- c(usd1 = 3.0, usd2 = 3.8)
 scr_acfb <- gamma_dist(1.7)
-scr_acfbx <- gamma_dist(1.4)
+scr_acfbx <- c(usd1 = 1.3, usd2 = 1.4)
 scr_acfc <- gamma_dist(1.2)
 
 # 2.7.2.3 TB treatment
@@ -166,11 +166,11 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
     if(interv_name == "acfa") {
       cm_screen_acf <- rgamma(n = 1, shape = scr_acfa[['shape']], scale = scr_acfa[['scale']])
     } else if(interv_name == "acfax") {
-      cm_screen_acf <- rgamma(n = 1, shape = scr_acfax[['shape']], scale = scr_acfax[['scale']])
+      cm_screen_acf <- runif(n = 1, min = scr_acfax[['usd1']], max = scr_acfax[['usd2']])
     } else if(interv_name == "acfb") {
       cm_screen_acf <- rgamma(n = 1, shape = scr_acfb[['shape']], scale = scr_acfb[['scale']])
     } else if(interv_name == "acfbx") {
-      cm_screen_acf <- rgamma(n = 1, shape = scr_acfbx[['shape']], scale = scr_acfbx[['scale']])
+      cm_screen_acf <- runif(n = 1, min = scr_acfbx[['usd1']], max = scr_acfbx[['usd2']])
     } else if(interv_name == "acfc") {
       cm_screen_acf <- rgamma(n = 1, shape = scr_acfc[['shape']], scale = scr_acfc[['scale']])
     }
