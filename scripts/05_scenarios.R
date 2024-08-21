@@ -28,22 +28,23 @@ parms <- parms %>%
 # 2.2 Intervention parameters
 pop_target <- 1 # Proportion of population targeted for ACF
 pop_reached <- 1 # Proportion of population participating in ACF
+fp_adj <- 0.75 # Reduction of probability of a positive test in non-disease states
 
-# 2.2.1 Xpert Ultra ## UPDATE ##
-xpert_fp_sic <- c(lo = 0.005, hi = 0.008)
-xpert_fp_rec <- c(lo = 0.026, hi = 0.070)
+# 2.2.1 Xpert Ultra
+xpert_fp_sic <- c(lo = 0.005, hi = 0.008)*(1-fp_adj)
+xpert_fp_rec <- c(lo = 0.026, hi = 0.070)*(1-fp_adj)
 xpert_sens_min <- c(lo = 0.026, hi = 0.070)
 xpert_sens_sub <- c(lo = 0.676, hi = 0.856)
 xpert_sens_cln <- c(lo = 0.862, hi = 0.947)
-xpert_fp_tre <- c(lo = 0.034, hi = 0.295)
+xpert_fp_tre <- c(lo = 0.034, hi = 0.295)*(1-fp_adj)
 
-# 2.2.2 Chest X-ray ## UPDATE ##
-cxr_fp_sic <- c(lo = 0.07, hi = 0.13)
-cxr_fp_rec <- c(lo = 0.07, hi = 0.13)
-cxr_sens_min <- c(lo = 0.77, hi = 0.90)
-cxr_sens_sub <- c(lo = 0.90, hi = 0.92)
-cxr_sens_cln <- c(lo = 0.90, hi = 0.92)
-cxr_fp_tre <- c(lo = 0.48, hi = 0.52)
+# 2.2.2 Chest X-ray
+cxr_fp_sic <- c(lo = 0.069, hi = 0.134)
+cxr_fp_rec <- c(lo = 0.069, hi = 0.134)
+cxr_sens_min <- c(lo = 0.770, hi = 0.900)
+cxr_sens_sub <- c(lo = 0.900, hi = 0.920)
+cxr_sens_cln <- c(lo = 0.900, hi = 0.920)
+cxr_fp_tre <- c(lo = 0.481, hi = 0.524)
 
 # 2.3 ACF scenarios
 # 2.3.1 ACF Scenario A - Xpert only, Xpert+ get treatment
@@ -93,8 +94,8 @@ gamma_dist <- function(mean, sdpct = 0.2) {
 }
 
 # 2.7.2.1 Passive case-finding
-scr_bau_dstb <- gamma_dist(104)
-scr_bau_drtb <- gamma_dist(500)
+scr_bau_dstb <- gamma_dist(104, sdpct = 0.5)
+scr_bau_drtb <- gamma_dist(500, sdpct = 0.5)
 
 # 2.7.2.2 Active case-finding per algorithm
 scr_acfa <- gamma_dist(8)
