@@ -38,22 +38,32 @@ outs <- rbindlist(lapply(df_names, function(df_name) {
 rm(list = setdiff(ls(), "outs"))
 
 outs <- outs %>% 
-  mutate(cBAU = cBAUs + cBAUr, # Cost of BAU (DSTB + DRTB)
+  mutate(tFP = tSUS + tINF + tCLE + tREC + tTRE, # Total FP
+         tTP = tMIN + tSUB + tCLN, # Total TP
+         tTPinf = tSUB + tCLN, # Total infectious TP
+         tACF = tSUS + tINF + tCLE + tREC + tTRE + tMIN + tSUB + tCLN, # Total ACF
+         cBAU = cBAUs + cBAUr, # Cost of BAU (DSTB + DRTB)
+         cACFFP = cACFSUS + cACFINF + cACFCLE + cACFREC + cACFTRE, # Cost of ACF FP
+         cACFTP = cACFMIN + cACFSUB + cACFCLN, # Cost of ACF TP
+         cACFTPinf = cACFSUB + cACFCLN, # Cost of ACF infectious TP
          cRxBAU = cRxBAUs + cRxBAUr, # Cost of treatment BAU (DSTB + DRTB)
-         cRxTP = cRxTPs + cRxTPr,  # Cost of treatment ACF TP (DSTB + DRTB)
-         cRxTPM = cRxTPMs + cRxTPMr, # Cost of treatment ACF TP minimal (DSTB + DRTB)
-         cRxTPI = cRxTPIs + cRxTPIr, # Cost of treatment ACF TP infectious (DSTB + DRTB)
-         cRxFP = cRxFPs + cRxFPr,  # Cost of treatment ACF FP (DSTB + DRTB)
-         cRxACF = cRxTPs + cRxTPr + cRxFPs + cRxFPr, # Cost of treatment ACF
-         cCF = cBAUs + cBAUr + cACF, # Cost of case finding
-         cRx = cRxBAUs + cRxBAUr + cRxTPs + cRxTPr + cRxFPs + cRxFPr, # Cost of treatment
-         cAll = cBAUs + cBAUr + cACF + cRxBAUs + cRxBAUr + cRxTPs + cRxTPr + cRxFPs + cRxFPr) %>% # All costs
+         cRxACFFP = cRxSUS + cRxINF + cRxCLE + cRxREC + cRxTRE, # Cost of treatment ACF FP 
+         cRxACFTP = cRxMIN + cRxSUBs + cRxSUBr + cRxCLNs + cRxCLNr, # Cost of treatment ACF TP (DSTB + DRTB)
+         cRxACFTPinf = cRxSUBs + cRxSUBr + cRxCLNs + cRxCLNr) %>%  # Cost of treatment ACF infectious TP (DSTB + DRTB)
+  mutate(cCF = cBAU + cACF, # Cost of case finding (PCF + ACF)
+         cRxACF = cRxACFFP + cRxACFTP, # Cost of treatment ACF
+         cRx = cRxBAU + cRxACFFP + cRxACFTP, # Cost of treatment (PCF + ACF)
+         cAll = cBAU + cACF + cRxBAU + cRxACFFP + cRxACFTP) %>% # All costs
   mutate(goal = case_when(type == 'acfa' & round == '03' ~ '100', type == 'acfa' & round == '06' ~ '50', type == 'acfa' & round == '11' ~ '20',
+                          type == 'acfax' & round == '03' ~ '100', type == 'acfax' & round == '06' ~ '50', type == 'acfax' & round == '11' ~ '20',
                           type == 'acfb' & round == '03' ~ '100', type == 'acfb' & round == '07' ~ '50', type == 'acfb' & round == '12' ~ '20',
+                          type == 'acfbx' & round == '03' ~ '100', type == 'acfbx' & round == '07' ~ '50', type == 'acfbx' & round == '12' ~ '20',
                           type == 'acfc' & round == '01' ~ '100', type == 'acfc' & round == '02' ~ '50', type == 'acfc' & round == '03' ~ '20',
-                          type == 'acfd' & round == '03' ~ '100', type == 'acfd' & round == '06' ~ '50', type == 'acfd' & round == '11' ~ '20',
                           type == 'base' ~ 'none')) %>% 
-  mutate(goal = factor(goal, levels = c('100', '50', '20', 'none')))
+  mutate(goal = factor(goal, levels = c('100', '50', '20', 'none'))) %>% 
+  mutate(res = case_when(type == 'acfa' ~ 'main', type == 'acfax' ~ 'sens',
+                         type == 'acfb' ~ 'main', type == 'acfbx' ~ 'sens',
+                         type == 'acfc' ~ 'main', type == 'base' ~ 'main'))
   
 outs_m <- outs %>%
   arrange(type, run, time) %>%
@@ -64,11 +74,10 @@ outs_m <- outs %>%
          prInc = tInc / tInc[type == 'base'],  # Proportional TB incidence to BAU
          dfInc = tInc - tInc[type == 'base'],  # TB incidence difference to BAU
          prMor = rMor / rMor[type == 'base'],  # Proportional TB mortality to BAU
-         dfMor = tMor - tMor[type == 'base'],  # TB mortality difference to BAU
-         dfAll = cAll - cAll[type == 'base']) %>%  # Cost difference to BAU
+         dfMor = tMor - tMor[type == 'base']) %>% # TB mortality difference to BAU
   ungroup() %>%
-  pivot_longer(cols = -c(time, type, run, round, goal), names_to = "var", values_to = "values") %>%
-  group_by(time, type, round, goal, var) %>%
+  pivot_longer(cols = -c(time, type, res, run, round, goal), names_to = "var", values_to = "values") %>%
+  group_by(time, type, res, round, goal, var) %>%
   summarise(val = median(values, na.rm = TRUE),
             lo = quantile(values, 0.025, na.rm = TRUE),
             hi = quantile(values, 0.975, na.rm = TRUE))
@@ -81,38 +90,60 @@ outs_yr <- outs %>%
   mutate(cumTBc = cumsum(tTBc), # Cumulative TB prevalence
          cumInc = cumsum(tInc), # Cumulative TB incidence
          cumMor = cumsum(tMor), # Cumulative TB mortality
-         cumInf = cumsum(tInf), # Cumulative Mtb infections
-         cumFP = cumsum(tFP), # Cumulative FP diagnoses
-         cumTPM = cumsum(tTPM), # Cumulative TP minimal diagnoses
-         cumTPI = cumsum(tTPI), # Cumulative TP infectious diagnoses
-         cumTP = cumsum(tTP), # Cumulative TP diagnoses
-         cumScrn = cumsum(tScrn), # Cumulative population screened
+         cumScrn = cumsum(tScrn), # Cumulative screened
+         cumSUS = cumsum(tSUS), # Cumulative diagnosed SUS
+         cumINF = cumsum(tINF), # Cumulative diagnosed INF
+         cumCLE = cumsum(tCLE), # Cumulative diagnosed CLE
+         cumREC = cumsum(tREC), # Cumulative diagnosed REC
+         cumMIN = cumsum(tMIN), # Cumulative diagnosed MIN
+         cumSUB = cumsum(tSUB), # Cumulative diagnosed SUB
+         cumCLN = cumsum(tCLN), # Cumulative diagnosed CLN
+         cumTRE = cumsum(tTRE), # Cumulative diagnosed TRE
+         cumFP = cumsum(tFP), # Cumulative diagnosed FP
+         cumTP = cumsum(tTP), # Cumulative diagnosed TP
+         cumTPinf = cumsum(tTPinf), # Cumulative diagnosed infectious TP
+         cumACF = cumsum(tACF), # Cumulative diagnosed ACF
+         cumcBAU = cumsum(cBAU), # Cumulative cost of BAU
+         cumcACFSUS = cumsum(cACFSUS), # Cumulative cost of ACF SUS
+         cumcACFINF = cumsum(cACFINF), # Cumulative cost of ACF INF
+         cumcACFCLE = cumsum(cACFCLE), # Cumulative cost of ACF CLE
+         cumcACFREC = cumsum(cACFREC), # Cumulative cost of ACF REC
+         cumcACFMIN = cumsum(cACFMIN), # Cumulative cost of ACF MIN
+         cumcACFSUB = cumsum(cACFSUB), # Cumulative cost of ACF SUB
+         cumcACFCLN = cumsum(cACFCLN), # Cumulative cost of ACF CLN
+         cumcACFTRE = cumsum(cACFTRE), # Cumulative cost of ACF TRE
+         cumcACFFP = cumsum(cACFFP), # Cumulative cost of ACF FP
+         cumcACFTP = cumsum(cACFTP), # Cumulative cost of ACF TP
+         cumcACFTPinf = cumsum(cACFTPinf), # Cumulative cost of ACF infectious TP
          cumcACF = cumsum(cACF), # Cumulative cost of ACF
-         cumcACFND = cumsum(cACFND), # Cumulative cost of ACF non-disease
-         cumcACFM = cumsum(cACFM), # Cumulative cost of ACF minimal
-         cumcACFI = cumsum(cACFI), # Cumulative cost of ACF infectious
-         cumcRxTP = cumsum(cRxTP), # Cumulative TP treatment
-         cumcRxTPM = cumsum(cRxTPM), # Cumulative TP minimal treatment
-         cumcRxTPI = cumsum(cRxTPI), # Cumulative TP infectious treatment
-         cumcRxFP = cumsum(cRxFP), # Cumulative FP treatment
-         cumcRxACF = cumsum(cRxACF), # Cumulative ACF treatment
+         cumcRxBAU = cumsum(cRxBAU), # Cumulative cost of BAU treatment
+         cumcRxSUS = cumsum(cRxSUS), # Cumulative cost of treatment SUS
+         cumcRxINF = cumsum(cRxINF), # Cumulative cost of treatment INF
+         cumcRxCLE = cumsum(cRxCLE), # Cumulative cost of treatment CLE
+         cumcRxREC = cumsum(cRxREC), # Cumulative cost of treatment REC
+         cumcRxMIN = cumsum(cRxMIN), # Cumulative cost of treatment MIN
+         cumcRxSUB = cumsum(cRxSUBs + cRxSUBr), # Cumulative cost of treatment SUB (DSTB + DRTB)
+         cumcRxCLN = cumsum(cRxCLNs + cRxCLNr), # Cumulative cost of treatment CLN (DSTB + DRTB)
+         cumcRxTRE = cumsum(cRxTRE), # Cumulative cost of treatment TRE
+         cumcRxACFFP = cumsum(cRxACFFP), # Cumulative cost of treatment FP
+         cumcRxACFTP = cumsum(cRxACFTP), # Cumulative cost of treatment TP
+         cumcRxACFTPinf = cumsum(cRxACFTPinf), # Cumulative cost of treatment infectious TP
+         cumcRxACF = cumsum(cRxACF), # Cumulative cost of treatment ACF
          cumcCF = cumsum(cCF), # Cumulative cost of case finding
          cumcRx = cumsum(cRx), # Cumulative cost of all treatments
          cumDALYs = cumsum(DALYs), # Cumulative DALYs
-         cumcAll = cumcCF + cumcRx) %>% # Cumulative costs of all 
+         cumcAll = cumsum(cAll)) %>% # Cumulative costs of all 
   ungroup() %>% 
   group_by(run, time) %>% 
   mutate(dfcumInc = cumInc - cumInc[type == 'base'], # TB incidence averted
          dfcumMor = cumMor - cumMor[type == 'base'], # TB mortality averted
-         dfcumInf = cumInf - cumInf[type == 'base'], # Mtb infections averted
          dfcumcCF = cumcCF - cumcCF[type == 'base'], # CF cost averted
          dfcumcRx = cumcRx - cumcRx[type == 'base'], # Rx cost averted
          dfcumcAll = cumcAll - cumcAll[type == 'base'], # All costs averted
          dfcumDALYs = cumDALYs - cumDALYs[type == 'base'], # DALYs averted
-         prpcACF = cumcACF / (cumcACF + cumcRxACF), # Proportion costs of ACF screening over total costs
-         prpcCF = cumcCF / (cumcCF + cumcRx)) %>%  # Proportion costs of all case finding over total costs
+         prpcACF = cumcACF / (cumcACF + cumcRxACF)) %>% # Proportion costs of ACF screening over total costs
   ungroup() %>% 
-  mutate(cumprFP = ifelse(cumFP == 0, NA, cumFP / (cumTP + cumFP)), # Proportion FP
+  mutate(cumprFP = ifelse(cumFP == 0, NA, cumFP / (cumACF)), # Proportion FP
          cumrtFP = ifelse(cumFP == 0, NA, cumFP / cumTP), # Ratio TP:FP
          cumrtFPScr = ifelse(cumScrn == 0, NA, cumScrn / cumFP), # Ratio FP:Scr
          cumrtTPScr = ifelse(cumScrn == 0, NA, cumScrn / cumTP), # Ratio TP:Scr
@@ -123,58 +154,16 @@ outs_yr <- outs %>%
          cpMorCF = ifelse((cumcCF + cumcRx) == 0, NA, (cumcCF + cumcRx) / abs(dfcumMor)), # Cost per TB death averted (All costs)
          cpDALYsACF = ifelse((cumcACF + cumcRxACF) == 0, NA, (cumcACF + cumcRxACF) / abs(dfcumDALYs)), # Cost per DALYs averted (ACF costs) 
          cpDALYsCF = ifelse((cumcCF + cumcRx) == 0, NA, (cumcCF + cumcRx) / abs(dfcumDALYs))) %>% # Cost per DALYs averted (All costs) 
-  select(time, type, run, round, goal, contains('cum'), contains('prp'), contains('cp')) %>%
-  pivot_longer(cols = -c(time, type, run, round, goal), names_to = "var", values_to = "values") %>%
-  group_by(time, type, round, goal, var) %>%
+  select(time, type, res, run, round, goal, contains('cum'), contains('prp'), contains('cp')) %>%
+  pivot_longer(cols = -c(time, type, res, run, round, goal), names_to = "var", values_to = "values") %>%
+  group_by(time, type, res, round, goal, var) %>%
   summarise(val = median(values, na.rm = TRUE), 
             lo = quantile(values, 0.025, na.rm = TRUE), 
             hi = quantile(values, 0.975, na.rm = TRUE))
 
-outs_baupost <- data.frame(run = integer(), post = integer(), bautDxs = numeric())
-runs <- unique(outs$run)
-
-for (i in 2025:2050) {
-  tmp <- outs %>%
-    arrange(type, run, time) %>% 
-    filter(type == "base") %>% 
-    filter(time >= i & time == floor(time)) %>% 
-    group_by(run) %>%
-    mutate(bautDxs = cumsum(tDxs)) %>%
-    filter(time == 2050) %>%
-    ungroup() %>%
-    select(run, bautDxs) %>%
-    mutate(post = i) %>%
-    select(run, post, bautDxs)
-  
-  outs_baupost <- bind_rows(outs_baupost, tmp)
-}
-rm(i, runs, tmp)
-
-outs_post <- outs %>% 
-  arrange(type, run, time) %>% 
-  filter(!type == "base") %>% 
-  filter(time >= 2025 & time == floor(time)) %>%
-  mutate(post = as.integer(round) + 2025) %>%
-  filter(time >= post) %>%
-  select(type, run, goal, round, post, time, tDxs) %>% 
-  group_by(type, run, goal, round, post) %>%
-  mutate(cumtDxs = cumsum(tDxs)) %>%
-  ungroup() %>% 
-  filter(time == 2050) %>% 
-  within(rm(tDxs)) %>% 
-  left_join(outs_baupost, by = c('run', 'post')) %>% 
-  mutate(dfcumtDxs = cumtDxs - bautDxs) %>% 
-  select(time, type, run, round, goal, cumtDxs, dfcumtDxs) %>% 
-  pivot_longer(cols = -c(time, type, run, round, goal), names_to = "var", values_to = "values") %>%
-  group_by(time, type, round, goal, var) %>%
-  summarise(val = median(values, na.rm = TRUE), 
-            lo = quantile(values, 0.025, na.rm = TRUE), 
-            hi = quantile(values, 0.975, na.rm = TRUE))
-
-outs <- outs_m %>% 
-  rbind(outs_yr, outs_post) %>% 
-  arrange(factor(type, levels = c("base", "acfa", "acfb", "acfc","acfd")), round, time) 
-rm(outs_m, outs_yr, outs_baupost, outs_post)
+outs <- rbind(outs_m, outs_yr) %>% 
+  arrange(factor(type, levels = c("base", "acfa", "acfb", "acfc", "acfax", "acfbx")), round, time) 
+rm(outs_m, outs_yr)
 
 export(outs, here("outputs", "outs", "outs.Rdata"))
 rm(outs)
@@ -202,6 +191,7 @@ filter(outini, var == 'rInc') # TB incidence rate
 filter(outini, var == 'rMor') # TB mortality rate
 
 outfin <- outs %>% 
+  filter(time == 2050) %>% 
   filter((type == 'acfa' & round == '03') | (type == 'acfa' & round == '06') | (type == 'acfa' & round == '11') |
            (type == 'acfb' & round == '03') | (type == 'acfb' & round == '07') | (type == 'acfb' & round == '12') | 
            (type == 'acfc' & round == '01') | (type == 'acfc' & round == '02') | (type == 'acfc' & round == '03') |
