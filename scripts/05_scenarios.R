@@ -13,7 +13,7 @@ library(progress) # Displays progress bar
 
 # 1. Load data ==========
 parms <- import(here("outputs","pts","fitpts.Rdata"))[1:1000,]
-# parms <- parms %>% sample_frac(0.2)
+# parms <- parms %>% sample_frac(0.1)
 WPP <- import(here("data","pop","WPP.Rdata"))
 base <- import(here("data","fit","base.Rdata"))
 DALYs <- import(here("docs","dalys","DALYs.xlsx"))
@@ -229,38 +229,38 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
         tInc      = (subcln * SUB), # Total TB incidence
         rMor      = ((mutb * CLN) / PopT * 1e5), # Clinical TB mortality per time (per 100k)
         tMor      = (mutb * CLN), # Clinical TB mortality per time
-        tScrn     = ((acf(floor(times))) * (((pop_target * pop_reached * prop_sputum) * (SUS + INF + CLE + REC + MIN + TRE)) + ((pop_target * pop_reached) * (SUB + CLN)))), # Total number screened
-        tSUS      = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * ((alpha_sic * (SUS)))), # Total susceptible diagnosed (SUS)
-        tINF      = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * ((alpha_sic * (INF)))), # Total infected diagnosed (INF)
-        tCLE      = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * ((alpha_sic * (CLE)))), # Total cleared diagnosed (CLE)
-        tREC      = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * ((alpha_rec * REC))), # Total recovered diagnosed (REC)
-        tMIN      = (acf(floor(times)) * (pop_target * pop_reached * prop_sputum * (alpha_min * MIN))), # Total minimal diagnosed (MIN)
-        tSUB      = (acf(floor(times)) * (pop_target * pop_reached * (alpha_sub * SUB))), # Total subclinical diagnosed (SUB)
-        tCLN      = (acf(floor(times)) * (pop_target * pop_reached * (alpha_cln * CLN))), # Total clinical diagnosed (CLN)
-        tTRE      = (acf(floor(times)) * (pop_target * pop_reached * (alpha_tre * (TRE)))), # Total treated diagnosed (TRE)
+        tScrn     = ((acf(floor(times)) * (((pop_target * pop_reached * prop_sputum) * (SUS + INF + CLE + REC + MIN + TRE)) + ((pop_target * pop_reached) * (SUB + CLN))))), # Total number screened
+        tSUS      = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * (alpha_sic * SUS)), # Total susceptible diagnosed (SUS)
+        tINF      = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * (alpha_sic * INF)), # Total infected diagnosed (INF)
+        tCLE      = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * (alpha_sic * CLE)), # Total cleared diagnosed (CLE)
+        tREC      = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * (alpha_rec * REC)), # Total recovered diagnosed (REC)
+        tMIN      = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum) * (alpha_min * MIN)), # Total minimal diagnosed (MIN)
+        tSUB      = ((acf(floor(times)) * pop_target * pop_reached) * (alpha_sub * SUB)), # Total subclinical diagnosed (SUB)
+        tCLN      = ((acf(floor(times)) * pop_target * pop_reached) * (alpha_cln * CLN)), # Total clinical diagnosed (CLN)
+        tTRE      = ((acf(floor(times)) * pop_target * pop_reached) * (alpha_tre * TRE)), # Total treated diagnosed (TRE)
         cBAUs     = (((1-mdr) * (theta * CLN)) * bau_dstb), # Costs BAU DS-TB
         cBAUr     = (((mdr) * (theta * CLN)) * bau_drtb), # Costs BAU DR-TB
-        cACF      = (((acf(floor(times))) * (((pop_target * pop_reached * prop_sputum) * (SUS + INF + CLE + REC + MIN + TRE)) + ((pop_target * pop_reached) * (SUB + CLN)))) * cm_screen_acf), # Total cost ACF
-        cACFSUS   = (((acf(floor(times))) * (pop_target * pop_reached * prop_sputum * SUS)) * cm_screen_acf), # Total cost ACF for susceptible (SUS)
-        cACFINF   = (((acf(floor(times))) * (pop_target * pop_reached * prop_sputum * INF)) * cm_screen_acf), # Total cost ACF for infected (INF)
-        cACFCLE   = (((acf(floor(times))) * (pop_target * pop_reached * prop_sputum * CLE)) * cm_screen_acf), # Total cost ACF for cleared (CLE)
-        cACFREC   = (((acf(floor(times))) * (pop_target * pop_reached * prop_sputum * REC)) * cm_screen_acf), # Total cost ACF for recovered (REC)
-        cACFMIN   = (((acf(floor(times))) * (pop_target * pop_reached * prop_sputum * MIN)) * cm_screen_acf), # Total cost ACF for minimal (MIN)
-        cACFSUB   = (((acf(floor(times))) * (pop_target * pop_reached * SUB)) * cm_screen_acf), # Total cost ACF for subclinical (SUB)
-        cACFCLN   = (((acf(floor(times))) * (pop_target * pop_reached * CLN)) * cm_screen_acf), # Total cost ACF for clinical (CLN)
-        cACFTRE   = (((acf(floor(times))) * (pop_target * pop_reached * prop_sputum * TRE)) * cm_screen_acf), # Total cost ACF for treated (TRE)
+        cACF      = ((acf(floor(times)) * (((pop_target * pop_reached * prop_sputum) * (SUS + INF + CLE + REC + MIN + TRE)) + ((pop_target * pop_reached) * (SUB + CLN)))) * cm_screen_acf), # Total cost ACF
+        cACFSUS   = ((acf(floor(times)) * (pop_target * pop_reached * prop_sputum * SUS)) * cm_screen_acf), # Total cost ACF for susceptible (SUS)
+        cACFINF   = ((acf(floor(times)) * (pop_target * pop_reached * prop_sputum * INF)) * cm_screen_acf), # Total cost ACF for infected (INF)
+        cACFCLE   = ((acf(floor(times)) * (pop_target * pop_reached * prop_sputum * CLE)) * cm_screen_acf), # Total cost ACF for cleared (CLE)
+        cACFREC   = ((acf(floor(times)) * (pop_target * pop_reached * prop_sputum * REC)) * cm_screen_acf), # Total cost ACF for recovered (REC)
+        cACFMIN   = ((acf(floor(times)) * (pop_target * pop_reached * prop_sputum * MIN)) * cm_screen_acf), # Total cost ACF for minimal (MIN)
+        cACFSUB   = ((acf(floor(times)) * (pop_target * pop_reached * SUB)) * cm_screen_acf), # Total cost ACF for subclinical (SUB)
+        cACFCLN   = ((acf(floor(times)) * (pop_target * pop_reached * CLN)) * cm_screen_acf), # Total cost ACF for clinical (CLN)
+        cACFTRE   = ((acf(floor(times)) * (pop_target * pop_reached * prop_sputum * TRE)) * cm_screen_acf), # Total cost ACF for treated (TRE)
         cRxBAUs   = (((1-mdr) * (theta * CLN)) * rx_dstb), # Costs treatment BAU DS-TB
         cRxBAUr   = (((mdr) * (theta * CLN)) * rx_drtb), # Costs treatment BAU DR-TB
-        cRxSUS    = (((acf(floor(times))) * (pop_target * pop_reached * prop_sputum * SUS)) * rx_dstb), # Cost DS-TB treatment for susceptible (SUS)
-        cRxINF    = (((acf(floor(times))) * (pop_target * pop_reached * prop_sputum * INF)) * rx_dstb), # Cost DS-TB treatment for infected (INF)
-        cRxCLE    = (((acf(floor(times))) * (pop_target * pop_reached * prop_sputum * CLE)) * rx_dstb), # Cost DS-TB treatment for cleared (CLE)
-        cRxREC    = (((acf(floor(times))) * (pop_target * pop_reached * prop_sputum * REC)) * rx_dstb), # Cost DS-TB treatment for recovered (REC)
-        cRxMIN    = (((acf(floor(times))) * (pop_target * pop_reached * prop_sputum * MIN)) * rx_dstb), # Cost DS-TB treatment for minimal (MIN)
-        cRxSUBs   = ((1-mdr) * (((acf(floor(times))) * (pop_target * pop_reached * SUB)) * rx_dstb)), # Cost DS-TB treatment for subclinical (SUB)
-        cRxSUBr   = ((mdr) * (((acf(floor(times))) * (pop_target * pop_reached * SUB)) * rx_drtb)), # Cost DR-TB treatment for subclinical (SUB)
-        cRxCLNs   = ((1-mdr) * (((acf(floor(times))) * (pop_target * pop_reached * CLN)) * rx_dstb)), # Cost DS-TB treatment for clinical (CLN)
-        cRxCLNr   = ((mdr) * (((acf(floor(times))) * (pop_target * pop_reached * CLN)) * rx_drtb)), # Cost DR-TB treatment for clinical (CLN)
-        cRxTRE    = (((acf(floor(times))) * (pop_target * pop_reached * prop_sputum * TRE)) * rx_dstb), # Cost DS-TB treatment for minimal (TRE)
+        cRxSUS    = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum * (alpha_sic * SUS)) * rx_dstb), # Cost DS-TB treatment for susceptible (SUS)
+        cRxINF    = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum * (alpha_sic * INF)) * rx_dstb), # Cost DS-TB treatment for infected (INF)
+        cRxCLE    = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum * (alpha_sic * CLE)) * rx_dstb), # Cost DS-TB treatment for cleared (CLE)
+        cRxREC    = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum * (alpha_rec * REC)) * rx_dstb), # Cost DS-TB treatment for recovered (REC)
+        cRxMIN    = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum * MIN) * rx_dstb), # Cost DS-TB treatment for minimal (MIN)
+        cRxSUBs   = ((1-mdr) * ((acf(floor(times)) * pop_target * pop_reached * SUB) * rx_dstb)), # Cost DS-TB treatment for subclinical (SUB)
+        cRxSUBr   = ((mdr) * ((acf(floor(times)) * pop_target * pop_reached * SUB) * rx_drtb)), # Cost DR-TB treatment for subclinical (SUB)
+        cRxCLNs   = ((1-mdr) * ((acf(floor(times)) * pop_target * pop_reached * CLN) * rx_dstb)), # Cost DS-TB treatment for clinical (CLN)
+        cRxCLNr   = ((mdr) * ((acf(floor(times)) * pop_target * pop_reached * CLN) * rx_drtb)), # Cost DR-TB treatment for clinical (CLN)
+        cRxTRE    = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum * TRE) * rx_dstb), # Cost DS-TB treatment for minimal (TRE)
         DALYs     = (daly(times) * (subcln * SUB)))) # DALY estimates
     })
   }
