@@ -161,9 +161,28 @@ outs_yr <- outs %>%
             lo = quantile(values, 0.025, na.rm = TRUE), 
             hi = quantile(values, 0.975, na.rm = TRUE))
 
-outs <- rbind(outs_m, outs_yr) %>% 
+ICERs <- outs_yr %>%
+  filter(time == 2050 & ((type == 'base' & round == '00') |
+                           (type == 'acfa' & round == '03') | (type == 'acfa' & round == '06') | (type == 'acfa' & round == '11') |
+                           (type == 'acfax' & round == '03') | (type == 'acfax' & round == '06') | (type == 'acfax' & round == '11') |
+                           (type == 'acfb' & round == '03') | (type == 'acfb' & round == '07') | (type == 'acfb' & round == '12') | 
+                           (type == 'acfbx' & round == '03') | (type == 'acfbx' & round == '07') | (type == 'acfbx' & round == '12') | 
+                           (type == 'acfc' & round == '01') | (type == 'acfc' & round == '02') | (type == 'acfc' & round == '03'))) %>%
+  filter(var == 'dfcumDALYs' | var == 'dfcumcAll') %>% 
+  pivot_wider(names_from = var, values_from = c(val, lo, hi)) %>% 
+  rename(val_COST = val_dfcumcAll, lo_COST = lo_dfcumcAll, hi_COST = hi_dfcumcAll,
+         val_DALY = val_dfcumDALYs, lo_DALY = lo_dfcumDALYs, hi_DALY = hi_dfcumDALYs) %>% 
+  select(time, type, res, round, goal, val_COST, lo_COST, hi_COST, val_DALY, lo_DALY, hi_DALY) %>% 
+  filter(!type == 'base') %>% 
+  mutate(icer_val = abs(val_COST / val_DALY), icer_lo = abs(lo_COST / lo_DALY), icer_hi = abs(hi_COST / hi_DALY)) %>% 
+  select(time, type, res, round, goal, starts_with('icer')) %>% 
+  mutate(var = 'icer') %>% 
+  rename(val = icer_val, lo = icer_lo, hi = icer_hi) %>% 
+  select(time, type, res, round, goal, var, val, lo, hi)
+
+outs <- rbind(outs_m, outs_yr, ICERs) %>% 
   arrange(factor(type, levels = c("base", "acfa", "acfb", "acfc", "acfax", "acfbx")), round, time) 
-rm(outs_m, outs_yr)
+rm(outs_m, outs_yr, ICERs)
 
 export(outs, here("outputs", "outs", "outs.Rdata"))
 rm(outs)
@@ -188,60 +207,24 @@ outini <- outs %>%
            (type == 'acfc' & round == '02' & time == 2027) |
            (type == 'acfc' & round == '03' & time == 2028))
 
-filter(outini, var == 'rTBc') # TB prevalence rate
-filter(outini, var == 'redTBc') # TB prevalence rate reduction
-filter(outini, var == 'rInc') # TB incidence rate
-filter(outini, var == 'rMor') # TB mortality rate
-
 outfin <- outs %>% 
+  filter(goal %in% c('20', 'none')) %>% # CHANGE THRESHOLD HERE
   filter(time == 2050) %>% 
-  filter((type == 'acfa' & round == '03') | (type == 'acfa' & round == '06') | (type == 'acfa' & round == '11') |
+  filter((type == 'base') |
+           (type == 'acfa' & round == '03') | (type == 'acfa' & round == '06') | (type == 'acfa' & round == '11') |
            (type == 'acfax' & round == '03') | (type == 'acfax' & round == '06') | (type == 'acfax' & round == '11') |
            (type == 'acfb' & round == '03') | (type == 'acfb' & round == '07') | (type == 'acfb' & round == '12') | 
            (type == 'acfbx' & round == '03') | (type == 'acfbx' & round == '07') | (type == 'acfbx' & round == '12') | 
-           (type == 'acfc' & round == '01') | (type == 'acfc' & round == '02') | (type == 'acfc' & round == '03'))
+           (type == 'acfc' & round == '01') | (type == 'acfc' & round == '02') | (type == 'acfc' & round == '03')) %>% 
+  mutate(val = format(val, big.mark = ","), lo = format(lo, big.mark = ","), hi = format(hi, big.mark = ","))
 
-filter(outfin, var == 'dfcumInc') # TB incidence averted 
-filter(outfin, var == 'dfcumMor') # TB mortality averted
-filter(outfin, var == 'cumDALYs') # Total DALYs
-filter(outfin, var == 'cumcAll') # All costs
-filter(outfin, var == 'cumcACF') # Total costs of ACF screening
-filter(outfin, var == 'cumcCF') # Total costs of case finding
-filter(outfin, var == 'cumTP') # Total true positives in ACF
-filter(outfin, var == 'cumFP') # Total true positives in ACF
-filter(outfin, var == 'cumprFP') # Proportion FP treated
-filter(outfin, var == 'cumcRxACF') # Total costs of ACF treatment
-filter(outfin, var == 'cumcRx') # Total costs of treatment
-filter(outfin, var == 'prpcACF') # Proportion of costs for ACF over all costs
-filter(outfin, var == 'dfcumDALYs') # DALYs averted
+# Results
+filter(outfin, var == 'cumInc') # Cumulative TB incidence 2050
+filter(outfin, var == 'cumMor') # Cumulative TB deaths 2050
+filter(outfin, var == 'cumDALYs') # Cumulative DALYs 2050
+filter(outfin, var == 'cumcCF') # Cumulative case-finding costs 2050
+filter(outfin, var == 'cumcRx') # Cumulative treatment costs 2050
+filter(outfin, var == 'cumcAll') # Cumulative costs 2050
+filter(outfin, var == 'icer') # ICER
 
-icerDALY <- outs %>%
-  filter(time == 2050 & ((type == 'base' & round == '00') |
-                           (type == 'acfa' & round == '03') | (type == 'acfa' & round == '06') | (type == 'acfa' & round == '11') |
-                           (type == 'acfax' & round == '03') | (type == 'acfax' & round == '06') | (type == 'acfax' & round == '11') |
-                           (type == 'acfb' & round == '03') | (type == 'acfb' & round == '07') | (type == 'acfb' & round == '12') | 
-                           (type == 'acfbx' & round == '03') | (type == 'acfbx' & round == '07') | (type == 'acfbx' & round == '12') | 
-                           (type == 'acfc' & round == '01') | (type == 'acfc' & round == '02') | (type == 'acfc' & round == '03'))) %>%
-  filter(var == 'dfcumDALYs' | var == 'cumcAll') %>% 
-  pivot_wider(names_from = var, values_from = c(val, lo, hi)) %>% 
-  mutate(val_COST = val_cumcAll, lo_COST = lo_cumcAll, hi_COST = hi_cumcAll) %>% 
-  rename(val_DALY = val_dfcumDALYs, lo_DALY = lo_dfcumDALYs, hi_DALY = hi_dfcumDALYs) %>% 
-  select(time, type, res, round, goal, val_COST, lo_COST, hi_COST, val_DALY, lo_DALY, hi_DALY) %>% 
-  mutate(cost_val = (val_COST - val_COST[type == 'base']), 
-         cost_lo = (lo_COST - lo_COST[type == 'base']),
-         cost_hi = (hi_COST - hi_COST[type == 'base']),
-         daly_val = (abs(val_DALY) - abs(val_DALY[type == 'base'])),
-         daly_lo = (abs(lo_DALY) - lo_DALY[type == 'base']),
-         daly_hi = (abs(hi_DALY) - hi_DALY[type == 'base'])) %>% 
-  select(time, type, res, round, goal, starts_with('cost'), starts_with('daly')) %>% 
-  filter(!type == 'base') %>% 
-  mutate(icer_val = cost_val / daly_val, icer_lo = cost_lo / daly_lo, icer_hi = cost_hi / daly_hi) %>% 
-  select(time, type, res, round, goal, starts_with('icer')) %>% 
-  mutate(var = 'icerDALY') %>% 
-  rename(val = icer_val, lo = icer_lo, hi = icer_hi) %>% 
-  select(time, type, res, round, goal, var, val, lo, hi)
-
-outs <- outs %>% 
-  rbind(icerDALY)
-export(outs, here("outputs", "outs", "outs.Rdata"))
 rm(list = ls())
