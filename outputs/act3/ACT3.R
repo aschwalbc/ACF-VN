@@ -94,10 +94,10 @@ ggplot() +
   geom_ribbon(df, mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
   scale_color_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
   scale_fill_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
-  scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0, 100)) +
+  scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0, 100), expand = c(0,0)) +
   scale_x_continuous(breaks = seq(2020,2050,1), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2025, 2035), ylim = c(0, 1)) + 
-  labs(x = "Year", y = "TB prevalence proportional reduction", title = "Reduction: Intervention Y1 vs Intervention Y4") +
+  labs(x = "Year", y = "TB prevalence proportional reduction") +
   geom_rect(aes(xmin = 2025, xmax = 2028, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) + 
   geom_point(aes(x = 2028, y = 1 - 0.6754), shape = 17) +
   geom_errorbar(aes(x = 2028, ymin = 1 - 0.7073, ymax = 1 - 0.6397), width = 0.5) + 
@@ -111,10 +111,10 @@ ggplot() +
   geom_ribbon(df, mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
   scale_color_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
   scale_fill_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
-  scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0, 100)) +
+  scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0, 100), expand = c(0,0)) +
   scale_x_continuous(breaks = seq(2020,2050,1), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2025, 2035), ylim = c(0, 1)) + 
-  labs(x = "Year", y = "TB prevalence proportional reduction", title = "Reduction: Intervention Y1 vs Control Y4") +
+  labs(x = "Year", y = "TB prevalence proportional reduction") +
   geom_rect(aes(xmin = 2025, xmax = 2028, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) + 
   geom_point(aes(x = 2028, y = 1 - 0.4166), shape = 17) +
   geom_errorbar(aes(x = 2028, ymin = 1 - 0.4672, ymax = 1 - 0.3615), width = 0.5) + 
@@ -128,7 +128,7 @@ ggplot() +
   geom_ribbon(df, mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
   scale_color_manual(values = c("#CE2931", "#1D2D5F","#636363","#182C25"), labels = c('Xpert-only', 'BAU','IntY1-CtrlY4','IntY1-IntY4')) +
   scale_fill_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
-  scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0, 100)) +
+  scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0, 100), expand = c(0,0)) +
   scale_x_continuous(breaks = seq(2020,2050,1), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2025, 2035), ylim = c(0, 1)) + 
   labs(x = "Year", y = "TB prevalence proportional reduction") +
