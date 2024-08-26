@@ -255,12 +255,12 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
         cRxINF    = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum * (alpha_sic * INF)) * rx_dstb), # Cost DS-TB treatment for infected (INF)
         cRxCLE    = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum * (alpha_sic * CLE)) * rx_dstb), # Cost DS-TB treatment for cleared (CLE)
         cRxREC    = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum * (alpha_rec * REC)) * rx_dstb), # Cost DS-TB treatment for recovered (REC)
-        cRxMIN    = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum * MIN) * rx_dstb), # Cost DS-TB treatment for minimal (MIN)
-        cRxSUBs   = ((1-mdr) * ((acf(floor(times)) * pop_target * pop_reached * SUB) * rx_dstb)), # Cost DS-TB treatment for subclinical (SUB)
-        cRxSUBr   = ((mdr) * ((acf(floor(times)) * pop_target * pop_reached * SUB) * rx_drtb)), # Cost DR-TB treatment for subclinical (SUB)
-        cRxCLNs   = ((1-mdr) * ((acf(floor(times)) * pop_target * pop_reached * CLN) * rx_dstb)), # Cost DS-TB treatment for clinical (CLN)
-        cRxCLNr   = ((mdr) * ((acf(floor(times)) * pop_target * pop_reached * CLN) * rx_drtb)), # Cost DR-TB treatment for clinical (CLN)
-        cRxTRE    = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum * TRE) * rx_dstb), # Cost DS-TB treatment for minimal (TRE)
+        cRxMIN    = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum * (alpha_min * MIN)) * rx_dstb), # Cost DS-TB treatment for minimal (MIN)
+        cRxSUBs   = ((1-mdr) * ((acf(floor(times)) * pop_target * pop_reached * (alpha_sub * SUB)) * rx_dstb)), # Cost DS-TB treatment for subclinical (SUB)
+        cRxSUBr   = ((mdr) * ((acf(floor(times)) * pop_target * pop_reached * (alpha_sub * SUB)) * rx_drtb)), # Cost DR-TB treatment for subclinical (SUB)
+        cRxCLNs   = ((1-mdr) * ((acf(floor(times)) * pop_target * pop_reached * (alpha_cln * CLN)) * rx_dstb)), # Cost DS-TB treatment for clinical (CLN)
+        cRxCLNr   = ((mdr) * ((acf(floor(times)) * pop_target * pop_reached * (alpha_cln * CLN)) * rx_drtb)), # Cost DR-TB treatment for clinical (CLN)
+        cRxTRE    = ((acf(floor(times)) * pop_target * pop_reached * prop_sputum * (alpha_tre * TRE)) * rx_dstb), # Cost DS-TB treatment for minimal (TRE)
         DALYs     = (daly(times) * (subcln * SUB)))) # DALY estimates
     })
   }
