@@ -21,7 +21,7 @@ ggplot(act3, aes(x = year, y = rate, fill = group)) +
   theme(legend.position = 'bottom')
 dev.off()
 
-# TB prevalence decline (Int Y1 vs Int Y4)
+# TB prevalence reduction (Int Y1 vs Int Y4)
 filter(act3, group == 'int' & year %in% c(1, 4))
 
 rate1 <- 389.2; ci_lower1 <- 333.8 ; ci_upper1 <- 453.5
@@ -31,14 +31,15 @@ rate2 <- 125.7; ci_lower2 <- 95.1; ci_upper2 <- 165.8
 sd2 <- (ci_upper2 - ci_lower2) / (2 * 1.96)
 
 # Simplified approach
-(rate2 - rate1) / rate1
-(ci_lower2 - ci_upper1) / ci_upper1
-(ci_upper2 - ci_lower1) / ci_lower1
+1 - (rate2 / rate1)
+1 - (ci_lower2 / ci_upper1)
+1 - (ci_upper2 / ci_lower1)
 
-smp1 <- rnorm(1000, mean = rate1, sd = sd1)
-smp2 <- rnorm(1000, mean = rate2, sd = sd2)
+# Sampling approach
+smp1 <- rnorm(100000, mean = rate1, sd = sd1)
+smp2 <- rnorm(100000, mean = rate2, sd = sd2)
 
-prpdf <- (smp2 - smp1) / smp1
+prpdf <- 1 - (smp2 / smp1)
 
 summary(prpdf)
 
@@ -55,14 +56,15 @@ rate2 <- 225.5; ci_lower2 <- 183.3; ci_upper2 <- 277.2
 sd2 <- (ci_upper2 - ci_lower2) / (2 * 1.96)
 
 # Simplified approach
-(rate2 - rate1) / rate1
-(ci_lower2 - ci_upper1) / ci_upper1
-(ci_upper2 - ci_lower1) / ci_lower1
+1 - (rate2 / rate1)
+1 - (ci_lower2 / ci_upper1)
+1 - (ci_upper2 / ci_lower1)
 
-smp1 <- rnorm(1000, mean = rate1, sd = sd1)
-smp2 <- rnorm(1000, mean = rate2, sd = sd2)
+# Sampling approach
+smp1 <- rnorm(100000, mean = rate1, sd = sd1)
+smp2 <- rnorm(100000, mean = rate2, sd = sd2)
 
-prpdf <- (smp2 - smp1) / smp1
+prpdf <- 1 - (smp2 / smp1)
 
 summary(prpdf)
 
@@ -78,7 +80,8 @@ df <- act %>%
   rbind(base) %>% 
   select(time, type, round, run, tTBc) %>% 
   group_by(run, time) %>%
-  mutate(prTBc = tTBc / tTBc[type == 'base']) %>% 
+  mutate(prTBc = tTBc / tTBc[type == 'base'],
+         redTBc = 1 - (tTBc / tTBc[type == 'base'])) %>% 
   within(rm(tTBc)) %>% 
   pivot_longer(cols = -c(time, type, run, round), names_to = "var", values_to = "values") %>%
   group_by(time, type, round, var) %>%
@@ -86,12 +89,12 @@ df <- act %>%
             lo = quantile(values, 0.025, na.rm = TRUE), 
             hi = quantile(values, 0.975, na.rm = TRUE))
 
-filter(df, time == 2029 & type == 'acfa')
+filter(df, time == 2028 & type == 'acfa')
 
 tiff(here("plots","S00_act3_int1vint4.tiff"), width = 6, height = 5, units = 'in', res = 150)
 ggplot() +
-  geom_line(df, mapping = aes(x = time, y = val, colour = type)) + 
-  geom_ribbon(df, mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  geom_line(filter(df, var == 'prTBc'), mapping = aes(x = time, y = val, colour = type)) + 
+  geom_ribbon(filter(df, var == 'prTBc'), mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
   scale_color_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
   scale_fill_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
   scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0, 100), expand = c(0,0)) +
@@ -107,8 +110,8 @@ dev.off()
 
 tiff(here("plots","S00_act3_int1vctrl4.tiff"), width = 6, height = 5, units = 'in', res = 150)
 ggplot() +
-  geom_line(df, mapping = aes(x = time, y = val, colour = type)) + 
-  geom_ribbon(df, mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  geom_line(filter(df, var == 'prTBc'), mapping = aes(x = time, y = val, colour = type)) + 
+  geom_ribbon(filter(df, var == 'prTBc'), mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
   scale_color_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
   scale_fill_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
   scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0, 100), expand = c(0,0)) +
@@ -124,8 +127,8 @@ dev.off()
 
 tiff(here("plots","S00_act3.tiff"), width = 6, height = 5, units = 'in', res = 150)
 ggplot() +
-  geom_line(df, mapping = aes(x = time, y = val, colour = type)) + 
-  geom_ribbon(df, mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
+  geom_line(filter(df, var == 'prTBc'), mapping = aes(x = time, y = val, colour = type)) + 
+  geom_ribbon(filter(df, var == 'prTBc'), mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
   scale_color_manual(values = c("#CE2931", "#1D2D5F","#636363","#182C25"), labels = c('Xpert-only', 'BAU','IntY1-CtrlY4','IntY1-IntY4')) +
   scale_fill_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
   scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0, 100), expand = c(0,0)) +
