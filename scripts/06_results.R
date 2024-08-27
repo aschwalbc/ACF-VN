@@ -141,19 +141,11 @@ outs_yr <- outs %>%
          dfcumcRx = cumcRx - cumcRx[type == 'base'], # Rx cost averted
          dfcumcAll = cumcAll - cumcAll[type == 'base'], # All costs averted
          dfcumDALYs = cumDALYs - cumDALYs[type == 'base'], # DALYs averted
-         prpcACF = cumcACF / (cumcACF + cumcRxACF)) %>% # Proportion costs of ACF screening over total costs
+         prpcACF = cumcACF / (cumcACF + cumcRxACF), # Proportion costs of ACF screening over total costs
+         prpcBAU = (cumcBAU + cumcRxBAU) / cumcAll) %>% # Proportion costs due to BAU
   ungroup() %>% 
   mutate(cumprFP = ifelse(cumFP == 0, NA, cumFP / (cumACF)), # Proportion FP
-         cumrtFP = ifelse(cumFP == 0, NA, cumFP / cumTP), # Ratio TP:FP
-         cumrtFPScr = ifelse(cumScrn == 0, NA, cumScrn / cumFP), # Ratio FP:Scr
-         cumrtTPScr = ifelse(cumScrn == 0, NA, cumScrn / cumTP), # Ratio TP:Scr
-         cumrtScr = ifelse(cumScrn == 0, NA, cumScrn / (cumTP + cumFP)), # Ratio Rx:Scr
-         cpIncACF = ifelse((cumcACF + cumcRxACF) == 0, NA, (cumcACF + cumcRxACF) / abs(dfcumInc)), # Cost per incident TB averted (ACF costs)
-         cpIncCF = ifelse((cumcCF + cumcRx) == 0, NA, (cumcCF + cumcRx) / abs(dfcumInc)), # Cost per incident TB averted (All costs)
-         cpMorACF = ifelse((cumcACF + cumcRxACF) == 0, NA, (cumcACF + cumcRxACF) / abs(dfcumMor)), # Cost per TB death averted (ACF costs)
-         cpMorCF = ifelse((cumcCF + cumcRx) == 0, NA, (cumcCF + cumcRx) / abs(dfcumMor)), # Cost per TB death averted (All costs)
-         cpDALYsACF = ifelse((cumcACF + cumcRxACF) == 0, NA, (cumcACF + cumcRxACF) / abs(dfcumDALYs)), # Cost per DALYs averted (ACF costs) 
-         cpDALYsCF = ifelse((cumcCF + cumcRx) == 0, NA, (cumcCF + cumcRx) / abs(dfcumDALYs))) %>% # Cost per DALYs averted (All costs) 
+         cumrtFP = ifelse(cumFP == 0, NA, cumFP / cumTP)) %>% # Ratio TP:FP)
   select(time, type, res, run, round, goal, contains('cum'), contains('prp'), contains('cp')) %>%
   pivot_longer(cols = -c(time, type, res, run, round, goal), names_to = "var", values_to = "values") %>%
   group_by(time, type, res, round, goal, var) %>%
@@ -208,7 +200,7 @@ outini <- outs %>%
            (type == 'acfc' & round == '03' & time == 2028))
 
 outfin <- outs %>% 
-  filter(goal %in% c('20', 'none')) %>% # CHANGE THRESHOLD HERE
+  filter(goal %in% c('50', 'none')) %>% # CHANGE THRESHOLD HERE
   filter(time == 2050) %>% 
   filter((type == 'base') |
            (type == 'acfa' & round == '03') | (type == 'acfa' & round == '06') | (type == 'acfa' & round == '11') |
@@ -226,5 +218,16 @@ filter(outfin, var == 'cumcCF') # Cumulative case-finding costs 2050
 filter(outfin, var == 'cumcRx') # Cumulative treatment costs 2050
 filter(outfin, var == 'cumcAll') # Cumulative costs 2050
 filter(outfin, var == 'icer') # ICER
+
+filter(outfin, var == 'cumTP') # Cumulative TP
+filter(outfin, var == 'cumMIN') # Cumulative minimal
+filter(outfin, var == 'cumTPinf') # Cumulative infectious TP
+filter(outfin, var == 'cumFP') # Cumulative FP
+filter(outfin, var == 'cumrtFP') # Ratio TP:FP
+
+filter(outfin, var == 'prpcACF') # Proportion costs ACF
+filter(outfin, var == 'prpcBAU') # Proportion costs BAU
+
+filter(outfin, var == 'dfcumDALYs') # Cumulative DALYs averted 2050
 
 rm(list = ls())
