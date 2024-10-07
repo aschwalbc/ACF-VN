@@ -28,15 +28,14 @@ parms <- parms %>%
 # 2.2 Intervention parameters
 pop_target <- 1 # Proportion of population targeted for ACF
 pop_reached <- 1 # Proportion of population participating in ACF
-fp_adj <- 0.75 # Reduction of probability of a positive test in non-disease states
 
 # 2.2.1 Xpert Ultra
-xpert_fp_sic <- c(lo = 0.005, hi = 0.008)*(1-fp_adj)
-xpert_fp_rec <- c(lo = 0.026, hi = 0.070)*(1-fp_adj)
-xpert_sens_min <- c(lo = 0.026, hi = 0.070)
-xpert_sens_sub <- c(lo = 0.676, hi = 0.856)
-xpert_sens_cln <- c(lo = 0.862, hi = 0.947)
-xpert_fp_tre <- c(lo = 0.034, hi = 0.295)*(1-fp_adj)
+ultra_fp_sic <- c(lo = 0.005, hi = 0.008)
+ultra_fp_rec <- c(lo = 0.026, hi = 0.070)
+ultra_sens_min <- c(lo = 0.026, hi = 0.070)
+ultra_sens_sub <- c(lo = 0.676, hi = 0.856)
+ultra_sens_cln <- c(lo = 0.862, hi = 0.947)
+ultra_fp_tre <- c(lo = 0.020, hi = 0.060)
 
 # 2.2.2 Chest X-ray
 cxr_fp_sic <- c(lo = 0.069, hi = 0.134)
@@ -46,25 +45,33 @@ cxr_sens_sub <- c(lo = 0.900, hi = 0.920)
 cxr_sens_cln <- c(lo = 0.900, hi = 0.920)
 cxr_fp_tre <- c(lo = 0.481, hi = 0.524)
 
+# 2.2.3 Xpert MTB/RIF (SA)
+xpert_fp_sic <- c(lo = 0.0016, hi = 0.0029)
+xpert_fp_rec <- c(lo = 0.007, hi = 0.030)
+xpert_sens_min <- c(lo = 0.007, hi = 0.030)
+xpert_sens_sub <- c(lo = 0.484, hi = 0.717)
+xpert_sens_cln <- c(lo = 0.786, hi = 0.899)
+xpert_fp_tre <- c(lo = 0.005, hi = 0.083)
+
 # 2.3 ACF scenarios
-# 2.3.1 ACF Scenario A - Xpert only, Xpert+ get treatment
+# 2.3.1 ACF Scenario A - Ultra only, Ultra+ get treatment
 acfa <- data.frame(parameter = character(), lo = numeric(), hi = numeric()) %>% 
-  add_row(parameter = "alpha_sic", lo = xpert_fp_sic['lo'], hi = xpert_fp_sic['hi']) %>% 
-  add_row(parameter = "alpha_rec", lo = xpert_fp_rec['lo'], hi = xpert_fp_rec['hi']) %>% 
-  add_row(parameter = "alpha_min", lo = xpert_sens_min['lo'], hi = xpert_sens_min['hi']) %>% 
-  add_row(parameter = "alpha_sub", lo = xpert_sens_sub['lo'], hi = xpert_sens_sub['hi']) %>%
-  add_row(parameter = "alpha_cln", lo = xpert_sens_cln['lo'], hi = xpert_sens_cln['hi']) %>% 
-  add_row(parameter = "alpha_tre", lo = xpert_fp_tre['lo'], hi = xpert_fp_tre['hi']) 
+  add_row(parameter = "alpha_sic", lo = ultra_fp_sic['lo'], hi = ultra_fp_sic['hi']) %>% 
+  add_row(parameter = "alpha_rec", lo = ultra_fp_rec['lo'], hi = ultra_fp_rec['hi']) %>% 
+  add_row(parameter = "alpha_min", lo = ultra_sens_min['lo'], hi = ultra_sens_min['hi']) %>% 
+  add_row(parameter = "alpha_sub", lo = ultra_sens_sub['lo'], hi = ultra_sens_sub['hi']) %>%
+  add_row(parameter = "alpha_cln", lo = ultra_sens_cln['lo'], hi = ultra_sens_cln['hi']) %>% 
+  add_row(parameter = "alpha_tre", lo = ultra_fp_tre['lo'], hi = ultra_fp_tre['hi']) 
 acfax <- acfa # Replicating for costing sensitivity analysis
 
-# 2.3.2 ACF Scenario B - CXR only, CXR+ get Xpert, Xpert+ get treatment
+# 2.3.2 ACF Scenario B - CXR only, CXR+ get Ultra, Ultra+ get treatment
 acfb <- data.frame(parameter = character(), lo = numeric(), hi = numeric()) %>% 
-  add_row(parameter = "alpha_sic", lo = xpert_fp_sic['lo']*cxr_fp_sic['lo'], hi = xpert_fp_sic['hi']*cxr_fp_sic['hi']) %>% 
-  add_row(parameter = "alpha_rec", lo = xpert_fp_rec['lo']*cxr_fp_rec['lo'], hi = xpert_fp_rec['hi']*cxr_fp_rec['hi']) %>% 
-  add_row(parameter = "alpha_min", lo = xpert_sens_min['lo']*cxr_sens_min['lo'], hi = xpert_sens_min['hi']*cxr_sens_min['hi']) %>% 
-  add_row(parameter = "alpha_sub", lo = xpert_sens_sub['lo']*cxr_sens_sub['lo'], hi = xpert_sens_sub['hi']*cxr_sens_sub['hi']) %>%
-  add_row(parameter = "alpha_cln", lo = xpert_sens_cln['lo']*cxr_sens_cln['lo'], hi = xpert_sens_cln['hi']*cxr_sens_cln['hi']) %>% 
-  add_row(parameter = "alpha_tre", lo = xpert_fp_tre['lo']*cxr_fp_tre['lo'], hi = xpert_fp_tre['hi']*cxr_fp_tre['hi'])
+  add_row(parameter = "alpha_sic", lo = ultra_fp_sic['lo']*cxr_fp_sic['lo'], hi = ultra_fp_sic['hi']*cxr_fp_sic['hi']) %>% 
+  add_row(parameter = "alpha_rec", lo = ultra_fp_rec['lo']*cxr_fp_rec['lo'], hi = ultra_fp_rec['hi']*cxr_fp_rec['hi']) %>% 
+  add_row(parameter = "alpha_min", lo = ultra_sens_min['lo']*cxr_sens_min['lo'], hi = ultra_sens_min['hi']*cxr_sens_min['hi']) %>% 
+  add_row(parameter = "alpha_sub", lo = ultra_sens_sub['lo']*cxr_sens_sub['lo'], hi = ultra_sens_sub['hi']*cxr_sens_sub['hi']) %>%
+  add_row(parameter = "alpha_cln", lo = ultra_sens_cln['lo']*cxr_sens_cln['lo'], hi = ultra_sens_cln['hi']*cxr_sens_cln['hi']) %>% 
+  add_row(parameter = "alpha_tre", lo = ultra_fp_tre['lo']*cxr_fp_tre['lo'], hi = ultra_fp_tre['hi']*cxr_fp_tre['hi'])
 acfbx <- acfb # Replicating for costing sensitivity analysis
 
 # 2.3.3 ACF Scenario C - CXR only, CXR+ get treatment
@@ -76,7 +83,16 @@ acfc <- data.frame(parameter = character(), lo = numeric(), hi = numeric()) %>%
   add_row(parameter = "alpha_cln", lo = cxr_sens_cln['lo'], hi = cxr_sens_cln['hi']) %>% 
   add_row(parameter = "alpha_tre", lo = cxr_fp_tre['lo'], hi = cxr_fp_tre['hi'])
 
-rm(list = ls(pattern = "^(xpert|cxr)"))
+# 2.3.4 ACF SA Scenario - MTB/RIF only, MTB/RIF+ get treatment
+acfd <- data.frame(parameter = character(), lo = numeric(), hi = numeric()) %>% 
+  add_row(parameter = "alpha_sic", lo = xpert_fp_sic['lo'], hi = xpert_fp_sic['hi']) %>% 
+  add_row(parameter = "alpha_rec", lo = xpert_fp_rec['lo'], hi = xpert_fp_rec['hi']) %>% 
+  add_row(parameter = "alpha_min", lo = xpert_sens_min['lo'], hi = xpert_sens_min['hi']) %>% 
+  add_row(parameter = "alpha_sub", lo = xpert_sens_sub['lo'], hi = xpert_sens_sub['hi']) %>%
+  add_row(parameter = "alpha_cln", lo = xpert_sens_cln['lo'], hi = xpert_sens_cln['hi']) %>% 
+  add_row(parameter = "alpha_tre", lo = xpert_fp_tre['lo'], hi = xpert_fp_tre['hi'])
+
+rm(list = ls(pattern = "^(ultra|cxr|xpert)"))
 
 # 2.7 Other parameters
 # 2.7.1 Population parameters
@@ -94,8 +110,8 @@ gamma_dist <- function(mean, sdpct = 0.2) {
 }
 
 # 2.7.2.1 Passive case-finding
-scr_bau_dstb <- gamma_dist(104, sdpct = 0.5)
-scr_bau_drtb <- gamma_dist(500, sdpct = 0.5)
+scr_bau_dstb <- gamma_dist(264)
+scr_bau_drtb <- gamma_dist(1595)
 
 # 2.7.2.2 Active case-finding per algorithm
 scr_acfa <- gamma_dist(8)
@@ -103,6 +119,7 @@ scr_acfax <- c(usd1 = 3.0, usd2 = 3.8)
 scr_acfb <- gamma_dist(1.7)
 scr_acfbx <- c(usd1 = 1.3, usd2 = 1.4)
 scr_acfc <- gamma_dist(1.2)
+scr_acfd <- gamma_dist(8)
 
 # 2.7.2.3 TB treatment
 tb_rx_dstb <- gamma_dist(81)
@@ -143,7 +160,7 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
   } else {
     interv_name <- deparse(substitute(interv))
     
-    if(interv_name %in% c('acfa', 'acfax', 'acfb', 'acfbx')) {
+    if(interv_name %in% c('acfa', 'acfax', 'acfb', 'acfbx', 'acfd')) {
       prop_sputum <- 0.6
     } else if(interv_name == "acfc") {
       prop_sputum <- 1
@@ -174,6 +191,8 @@ ode <- function(parms, base, interv = NULL, acf_times = NULL, end_time = 2050) {
       cm_screen_acf <- runif(n = 1, min = scr_acfbx[['usd1']], max = scr_acfbx[['usd2']])
     } else if(interv_name == "acfc") {
       cm_screen_acf <- rgamma(n = 1, shape = scr_acfc[['shape']], scale = scr_acfc[['scale']])
+    } else if(interv_name == "acfd") {
+      cm_screen_acf <- rgamma(n = 1, shape = scr_acfd[['shape']], scale = scr_acfd[['scale']])
     }
   }
   
@@ -295,14 +314,17 @@ acf_year <- list(
   "03" = seq(2025, 2027, 1),
   "06" = seq(2025, 2030, 1),
   "07" = seq(2025, 2031, 1),
+  "08" = seq(2025, 2032, 1), 
   "11" = seq(2025, 2035, 1),
-  "12" = seq(2025, 2036, 1))
+  "12" = seq(2025, 2036, 1),
+  "14" = seq(2025, 2038, 1))
 
 outacfa <- list()
 outacfax <- list()
 outacfb <- list()
 outacfbx <- list()
 outacfc <- list()
+outacfd <- list()
 
 for (j in names(acf_year)) {
   rounds <- acf_year[[j]]
@@ -323,6 +345,9 @@ for (j in names(acf_year)) {
   if (j %in% c("01", "02", "03")) {
     outacfc[[j]] <- list()
   }
+  if (j %in% c("03", "08", "14")) {
+    outacfd[[j]] <- list()
+  }
   
   pb <- progress_bar$new(format = "[:bar] :percent :eta", total = nrow(parms))
   
@@ -334,25 +359,30 @@ for (j in names(acf_year)) {
       outacfa[[j]][[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfa, acf_times = acf_year[[j]]))
       outacfa[[j]][[i]] <- outacfa[[j]][[i]] %>% mutate(type = 'acfa', run = i, round = j)
     }
-    
+
     if (j %in% c("03", "06", "11")) {
       outacfax[[j]][[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfax, acf_times = acf_year[[j]]))
       outacfax[[j]][[i]] <- outacfax[[j]][[i]] %>% mutate(type = 'acfax', run = i, round = j)
     }
-    
+
     if (j %in% c("03", "07", "12")) {
       outacfb[[j]][[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfb, acf_times = acf_year[[j]]))
       outacfb[[j]][[i]] <- outacfb[[j]][[i]] %>% mutate(type = 'acfb', run = i, round = j)
     }
-    
+
     if (j %in% c("03", "07", "12")) {
       outacfbx[[j]][[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfbx, acf_times = acf_year[[j]]))
       outacfbx[[j]][[i]] <- outacfbx[[j]][[i]] %>% mutate(type = 'acfbx', run = i, round = j)
     }
-    
+
     if (j %in% c("01", "02", "03")) {
       outacfc[[j]][[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfc, acf_times = acf_year[[j]]))
       outacfc[[j]][[i]] <- outacfc[[j]][[i]] %>% mutate(type = 'acfc', run = i, round = j)
+    }
+    
+    if (j %in% c("03", "08", "14")) {
+      outacfd[[j]][[i]] <- as.data.frame(ode(parms = curr_parms, base = curr_base, interv = acfd, acf_times = acf_year[[j]]))
+      outacfd[[j]][[i]] <- outacfd[[j]][[i]] %>% mutate(type = 'acfd', run = i, round = j)
     }
     
     pb$tick()
@@ -363,22 +393,26 @@ for (k in 1:3) {
   acfa_name <- paste0("r", names(outacfa[k]), "_outacfa_df")
   assign(acfa_name, do.call(rbind, outacfa[[k]]))
   export(get(acfa_name), here("outputs", "results", paste0(acfa_name, ".Rdata")))
-  
+
   acfax_name <- paste0("r", names(outacfax[k]), "_outacfax_df")
   assign(acfax_name, do.call(rbind, outacfax[[k]]))
   export(get(acfax_name), here("outputs", "results", paste0(acfax_name, ".Rdata")))
-  
+
   acfb_name <- paste0("r", names(outacfb[k]), "_outacfb_df")
   assign(acfb_name, do.call(rbind, outacfb[[k]]))
   export(get(acfb_name), here("outputs", "results", paste0(acfb_name, ".Rdata")))
-  
+
   acfbx_name <- paste0("r", names(outacfbx[k]), "_outacfbx_df")
   assign(acfbx_name, do.call(rbind, outacfbx[[k]]))
   export(get(acfbx_name), here("outputs", "results", paste0(acfbx_name, ".Rdata")))
-  
+
   acfc_name <- paste0("r", names(outacfc[k]), "_outacfc_df")
   assign(acfc_name, do.call(rbind, outacfc[[k]]))
   export(get(acfc_name), here("outputs", "results", paste0(acfc_name, ".Rdata")))
+  
+  acfd_name <- paste0("r", names(outacfd[k]), "_outacfd_df")
+  assign(acfd_name, do.call(rbind, outacfd[[k]]))
+  export(get(acfd_name), here("outputs", "results", paste0(acfd_name, ".Rdata")))
   
 }
 
