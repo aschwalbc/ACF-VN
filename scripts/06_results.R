@@ -59,11 +59,13 @@ outs <- outs %>%
                           type == 'acfb' & round == '03' ~ '100', type == 'acfb' & round == '07' ~ '50', type == 'acfb' & round == '12' ~ '20',
                           type == 'acfbx' & round == '03' ~ '100', type == 'acfbx' & round == '07' ~ '50', type == 'acfbx' & round == '12' ~ '20',
                           type == 'acfc' & round == '01' ~ '100', type == 'acfc' & round == '02' ~ '50', type == 'acfc' & round == '03' ~ '20',
+                          type == 'acfd' & round == '03' ~ '100', type == 'acfd' & round == '08' ~ '50', type == 'acfd' & round == '14' ~ '20',
                           type == 'base' ~ 'none')) %>% 
   mutate(goal = factor(goal, levels = c('100', '50', '20', 'none'))) %>% 
   mutate(res = case_when(type == 'acfa' ~ 'main', type == 'acfax' ~ 'sens',
                          type == 'acfb' ~ 'main', type == 'acfbx' ~ 'sens',
-                         type == 'acfc' ~ 'main', type == 'base' ~ 'main'))
+                         type == 'acfc' ~ 'main', type == 'acfd' ~ 'sens', 
+                         type == 'base' ~ 'main'))
   
 outs_m <- outs %>%
   arrange(type, run, time) %>%
@@ -137,7 +139,9 @@ outs_yr <- outs %>%
   group_by(run, time) %>% 
   mutate(dfcumInc = cumInc - cumInc[type == 'base'], # TB incidence averted
          dfcumMor = cumMor - cumMor[type == 'base'], # TB mortality averted
+         dfcumcBAU = cumcBAU - cumcBAU[type == 'base'], # BAU cost averted
          dfcumcCF = cumcCF - cumcCF[type == 'base'], # CF cost averted
+         dfcumcRxBAU = cumcRxBAU - cumcRxBAU[type == 'base'], # BAU Rx cost averted
          dfcumcRx = cumcRx - cumcRx[type == 'base'], # Rx cost averted
          dfcumcAll = cumcAll - cumcAll[type == 'base'], # All costs averted
          dfcumDALYs = cumDALYs - cumDALYs[type == 'base'], # DALYs averted
@@ -159,7 +163,8 @@ ICERs <- outs_yr %>%
                            (type == 'acfax' & round == '03') | (type == 'acfax' & round == '06') | (type == 'acfax' & round == '11') |
                            (type == 'acfb' & round == '03') | (type == 'acfb' & round == '07') | (type == 'acfb' & round == '12') | 
                            (type == 'acfbx' & round == '03') | (type == 'acfbx' & round == '07') | (type == 'acfbx' & round == '12') | 
-                           (type == 'acfc' & round == '01') | (type == 'acfc' & round == '02') | (type == 'acfc' & round == '03'))) %>%
+                           (type == 'acfc' & round == '01') | (type == 'acfc' & round == '02') | (type == 'acfc' & round == '03') |
+                           (type == 'acfd' & round == '03') | (type == 'acfd' & round == '08') | (type == 'acfd' & round == '14'))) %>%
   filter(var == 'dfcumDALYs' | var == 'dfcumcAll') %>% 
   pivot_wider(names_from = var, values_from = c(val, lo, hi)) %>% 
   rename(val_COST = val_dfcumcAll, lo_COST = lo_dfcumcAll, hi_COST = hi_dfcumcAll,
@@ -173,7 +178,7 @@ ICERs <- outs_yr %>%
   select(time, type, res, round, goal, var, val, lo, hi)
 
 outs <- rbind(outs_m, outs_yr, ICERs) %>% 
-  arrange(factor(type, levels = c("base", "acfa", "acfb", "acfc", "acfax", "acfbx")), round, time) 
+  arrange(factor(type, levels = c("base", "acfa", "acfb", "acfc", "acfax", "acfbx", "acfd")), round, time) 
 rm(outs_m, outs_yr, ICERs)
 
 export(outs, here("outputs", "outs", "outs.Rdata"))
@@ -197,7 +202,10 @@ outini <- outs %>%
            (type == 'acfbx' & round == '12' & time == 2037) |
            (type == 'acfc' & round == '01' & time == 2026) |
            (type == 'acfc' & round == '02' & time == 2027) |
-           (type == 'acfc' & round == '03' & time == 2028))
+           (type == 'acfc' & round == '03' & time == 2028) |
+           (type == 'acfd' & round == '03' & time == 2028) |
+           (type == 'acfd' & round == '08' & time == 2033) |
+           (type == 'acfd' & round == '14' & time == 2039)) 
 
 outfin <- outs %>% 
   filter(goal %in% c('50', 'none')) %>% # CHANGE THRESHOLD HERE
@@ -207,7 +215,8 @@ outfin <- outs %>%
            (type == 'acfax' & round == '03') | (type == 'acfax' & round == '06') | (type == 'acfax' & round == '11') |
            (type == 'acfb' & round == '03') | (type == 'acfb' & round == '07') | (type == 'acfb' & round == '12') | 
            (type == 'acfbx' & round == '03') | (type == 'acfbx' & round == '07') | (type == 'acfbx' & round == '12') | 
-           (type == 'acfc' & round == '01') | (type == 'acfc' & round == '02') | (type == 'acfc' & round == '03')) %>% 
+           (type == 'acfc' & round == '01') | (type == 'acfc' & round == '02') | (type == 'acfc' & round == '03') |
+           (type == 'acfd' & round == '03') | (type == 'acfd' & round == '08') | (type == 'acfd' & round == '14')) %>% 
   mutate(val = format(val, big.mark = ","), lo = format(lo, big.mark = ","), hi = format(hi, big.mark = ","))
 
 # Results
