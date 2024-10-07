@@ -8,7 +8,7 @@ set.seed(123)
 act3 <- import(here("outputs","act3","ACT3.csv"))
 act3$group <- factor(act3$group, levels = c('int', 'ctrl'))
 
-tiff(here("outputs","act3","ACT3.tiff"), width = 6, height = 5, units = 'in', res = 150)
+png(here("outputs","act3","ACT3.png"), width = 6, height = 5, units = 'in', res = 1000)
 ggplot(act3, aes(x = year, y = rate, fill = group)) +
   geom_bar(stat = 'identity', position = position_dodge(width = 0.9)) +
   geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.25, 
@@ -91,7 +91,7 @@ df <- act %>%
 
 filter(df, time == 2028 & type == 'acfa')
 
-tiff(here("plots","S00_act3_int1vint4.tiff"), width = 6, height = 5, units = 'in', res = 150)
+png(here("plots","S00_act3_int1vint4.png"), width = 6, height = 5, units = 'in', res = 1000)
 ggplot() +
   geom_line(filter(df, var == 'prTBc'), mapping = aes(x = time, y = val, colour = type)) + 
   geom_ribbon(filter(df, var == 'prTBc'), mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
@@ -108,7 +108,7 @@ ggplot() +
   theme(legend.position = 'none', plot.margin = margin(10,15,5,10,"pt"), panel.grid.minor.x = element_blank())
 dev.off()
 
-tiff(here("plots","S00_act3_int1vctrl4.tiff"), width = 6, height = 5, units = 'in', res = 150)
+png(here("plots","S00_act3_int1vctrl4.png"), width = 6, height = 5, units = 'in', res = 1000)
 ggplot() +
   geom_line(filter(df, var == 'prTBc'), mapping = aes(x = time, y = val, colour = type)) + 
   geom_ribbon(filter(df, var == 'prTBc'), mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
@@ -125,7 +125,7 @@ ggplot() +
   theme(legend.position = 'none', plot.margin = margin(10,15,5,10,"pt"), panel.grid.minor.x = element_blank())
 dev.off()
 
-tiff(here("plots","S00_act3.tiff"), width = 6, height = 5, units = 'in', res = 150)
+png(here("plots","S00_act3.png"), width = 6, height = 5, units = 'in', res = 1000)
 ggplot() +
   geom_line(filter(df, var == 'prTBc'), mapping = aes(x = time, y = val, colour = type)) + 
   geom_ribbon(filter(df, var == 'prTBc'), mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
