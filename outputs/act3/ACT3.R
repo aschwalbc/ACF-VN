@@ -3,6 +3,7 @@
 library(rio) # Facilitates importing and exporting
 library(here) # Building file paths
 library(tidyverse) # To use tidyverse
+library(extrafont) # Add specific fonts
 set.seed(123)
 
 act3 <- import(here("outputs","act3","ACT3.csv"))
@@ -13,12 +14,11 @@ ggplot(act3, aes(x = year, y = rate, fill = group)) +
   geom_bar(stat = 'identity', position = position_dodge(width = 0.9)) +
   geom_errorbar(aes(ymin = lo, ymax = hi), width = 0.25, 
                 position = position_dodge(width = 0.9)) +
-  labs(x = 'Year', y = 'TB prevalence rate (per 100k)',
-       title = 'ACT3', fill = 'Group') +
+  labs(x = 'Year', y = 'TB prevalence rate (per 100k)', fill = 'Group') +
   scale_fill_manual(values = c("int" = "salmon", "ctrl" = "turquoise"),
                     labels = c("int" = "Intervention", "ctrl" = "Control")) +
   theme_bw() +
-  theme(legend.position = 'bottom')
+  theme(legend.position = 'bottom', text = element_text(family = "Open Sans"))
 dev.off()
 
 # TB prevalence reduction (Int Y1 vs Int Y4)
@@ -43,7 +43,7 @@ prpdf <- 1 - (smp2 / smp1)
 
 summary(prpdf)
 
-inty1inty4 <- data.frame(type = 'IntY1-IntY4',time = 2028, val = abs(summary(prpdf)[[3]]),
+inty1inty4 <- data.frame(type = 'Intervention Y1 v Intervention Y4',time = 2028, val = abs(summary(prpdf)[[3]]),
                          lo = abs(summary(prpdf)[[5]]), hi = abs(summary(prpdf)[[2]]))
 
 # TB prevalence decline (Int Y1 vs Ctrl Y4)
@@ -68,7 +68,7 @@ prpdf <- 1 - (smp2 / smp1)
 
 summary(prpdf)
 
-inty1ctrly4 <- data.frame(type = 'IntY1-CtrlY4',time = 2028, val = abs(summary(prpdf)[[3]]),
+inty1ctrly4 <- data.frame(type = 'Intervention Y1 v Control Y4',time = 2028, val = abs(summary(prpdf)[[3]]),
                          lo = abs(summary(prpdf)[[5]]), hi = abs(summary(prpdf)[[2]]))
 
 # Comparison graph
@@ -87,57 +87,27 @@ df <- act %>%
   group_by(time, type, round, var) %>%
   summarise(val = median(values, na.rm = TRUE), 
             lo = quantile(values, 0.025, na.rm = TRUE), 
-            hi = quantile(values, 0.975, na.rm = TRUE))
+            hi = quantile(values, 0.975, na.rm = TRUE)) %>% 
+  filter(type != 'base')
 
 filter(df, time == 2028 & type == 'acfa')
-
-png(here("plots","S00_act3_int1vint4.png"), width = 6, height = 5, units = 'in', res = 1000)
-ggplot() +
-  geom_line(filter(df, var == 'prTBc'), mapping = aes(x = time, y = val, colour = type)) + 
-  geom_ribbon(filter(df, var == 'prTBc'), mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
-  scale_color_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
-  scale_fill_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
-  scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0, 100), expand = c(0,0)) +
-  scale_x_continuous(breaks = seq(2020,2050,1), limits = c(2020,2050), expand = c(0,0)) +
-  coord_cartesian(xlim = c(2025, 2035), ylim = c(0, 1)) + 
-  labs(x = "Year", y = "TB prevalence proportional reduction") +
-  geom_rect(aes(xmin = 2025, xmax = 2028, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) + 
-  geom_point(aes(x = 2028, y = 1 - 0.6754), shape = 17) +
-  geom_errorbar(aes(x = 2028, ymin = 1 - 0.7073, ymax = 1 - 0.6397), width = 0.5) + 
-  theme_bw() +
-  theme(legend.position = 'none', plot.margin = margin(10,15,5,10,"pt"), panel.grid.minor.x = element_blank())
-dev.off()
-
-png(here("plots","S00_act3_int1vctrl4.png"), width = 6, height = 5, units = 'in', res = 1000)
-ggplot() +
-  geom_line(filter(df, var == 'prTBc'), mapping = aes(x = time, y = val, colour = type)) + 
-  geom_ribbon(filter(df, var == 'prTBc'), mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
-  scale_color_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
-  scale_fill_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
-  scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0, 100), expand = c(0,0)) +
-  scale_x_continuous(breaks = seq(2020,2050,1), limits = c(2020,2050), expand = c(0,0)) +
-  coord_cartesian(xlim = c(2025, 2035), ylim = c(0, 1)) + 
-  labs(x = "Year", y = "TB prevalence proportional reduction") +
-  geom_rect(aes(xmin = 2025, xmax = 2028, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) + 
-  geom_point(aes(x = 2028, y = 1 - 0.4166), shape = 17) +
-  geom_errorbar(aes(x = 2028, ymin = 1 - 0.4672, ymax = 1 - 0.3615), width = 0.5) + 
-  theme_bw() +
-  theme(legend.position = 'none', plot.margin = margin(10,15,5,10,"pt"), panel.grid.minor.x = element_blank())
-dev.off()
 
 png(here("plots","S00_act3.png"), width = 6, height = 5, units = 'in', res = 1000)
 ggplot() +
   geom_line(filter(df, var == 'prTBc'), mapping = aes(x = time, y = val, colour = type)) + 
   geom_ribbon(filter(df, var == 'prTBc'), mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
-  scale_color_manual(values = c("#CE2931", "#1D2D5F","#636363","#182C25"), labels = c('Xpert-only', 'BAU','IntY1-CtrlY4','IntY1-IntY4')) +
-  scale_fill_manual(values = c("#CE2931", "#1D2D5F"), labels = c('Xpert-only', 'BAU')) +
+  scale_color_manual(values = c("#CE2931","#828282","#828282"), labels = c('Xpert-only', 'BAU','IntY1-CtrlY4','IntY1-IntY4')) +
+  scale_fill_manual(values = c("#CE2931"), labels = c('Xpert-only', 'BAU')) +
   scale_y_continuous(labels = scales::percent_format(scale = 100), limits = c(0, 100), expand = c(0,0)) +
   scale_x_continuous(breaks = seq(2020,2050,1), limits = c(2020,2050), expand = c(0,0)) +
   coord_cartesian(xlim = c(2025, 2035), ylim = c(0, 1)) + 
-  labs(x = "Year", y = "TB prevalence proportional reduction") +
+  labs(x = "Year", y = "Proportional reduction in TB prevalence") +
   geom_rect(aes(xmin = 2025, xmax = 2028, ymin = -Inf, ymax = Inf), fill = "gray", alpha = 0.2) + 
-  geom_point(data = comp, aes(x = time, y = 1 - val, colour = type), shape = 17) +
+  geom_point(data = comp, aes(x = time, y = 1 - val, colour = type, shape = type), size = 2) +
+  scale_shape_manual(values = c(15, 17)) +
   geom_errorbar(data = comp, aes(x = time, ymin = 1 - hi, ymax = 1 - lo, colour = type), width = 0.5) + 
   theme_bw() +
-  theme(legend.position = 'none', plot.margin = margin(10,15,5,10,"pt"), panel.grid.minor.x = element_blank())
+  theme(legend.position = 'bottom', plot.margin = margin(10,15,5,10,"pt"), panel.grid.minor.x = element_blank(),
+        text = element_text(family = "Open Sans"), axis.title.x = element_text(margin = margin(t = 10))) + 
+  guides(shape = guide_legend(title = "Outcome"), colour = 'none', fill = 'none')
 dev.off()          
