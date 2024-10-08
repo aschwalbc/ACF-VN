@@ -92,7 +92,7 @@ df <- act %>%
 
 filter(df, time == 2028 & type == 'acfa')
 
-png(here("plots","S00_act3.png"), width = 6, height = 5, units = 'in', res = 1000)
+png(here("plots","00_act3.png"), width = 6, height = 5, units = 'in', res = 1000)
 ggplot() +
   geom_line(filter(df, var == 'prTBc'), mapping = aes(x = time, y = val, colour = type)) + 
   geom_ribbon(filter(df, var == 'prTBc'), mapping = aes(x = time, ymin = lo, ymax = hi, fill = type), alpha = 0.2) +
