@@ -10,6 +10,7 @@ library(tidyverse) # To use tidyverse
 library(reshape2) # Reshaping data easily
 library(data.table) # Faster than data.frame, allows use of j operator (:=)
 library(patchwork) # Plot composition
+library(extrafont) # Add specific fonts
 
 # 1. Load data ==========
 results <- as.data.table(import(here("outputs","results.Rdata")))
@@ -49,7 +50,7 @@ a = ggplot(subset(results, var == "TBc" & time %in% from_to), aes(x=time)) +
   labs(title = "",
        x = "Year",
        y = "TB prevalence rate per 100k") +
-  theme(text = element_text(family = "sans"),
+  theme(text = element_text(family = "Open sans"),
         panel.background = element_blank(),
         panel.grid.major.y = element_blank(),
         panel.grid.major.x = element_blank(),
@@ -73,8 +74,8 @@ b = ggplot(subset(results, var == "Spr" & time %in% from_to), aes(x=time)) +
   coord_cartesian(ylim = c(0,1)) +
   labs(title = "",
        x = "Year",
-       y = "Proportion subclinical TB") +
-  theme(text = element_text(family = "sans"),
+       y = "Proportion asymptomatic TB") +
+  theme(text = element_text(family = "Open sans"),
         panel.background = element_blank(),
         panel.grid.major.y = element_blank(),
         panel.grid.major.x = element_blank(),
@@ -99,7 +100,7 @@ c = ggplot(subset(results, var == "Mor" & time %in% from_to), aes(x=time)) +
   labs(title = "",
        x = "Year",
        y = "TB mortality rate per 100k") +
-  theme(text = element_text(family = "sans"),
+  theme(text = element_text(family = "Open sans"),
         panel.background = element_blank(),
         panel.grid.major.y = element_blank(),
         panel.grid.major.x = element_blank(),
@@ -124,7 +125,7 @@ d = ggplot(subset(results, var == "Dxs" & time %in% from_to), aes(x=time)) +
   labs(title = "",
        x = "Year",
        y = "Notification rate per 100k") +
-  theme(text = element_text(family = "sans"),
+  theme(text = element_text(family = "Open sans"),
         panel.background = element_blank(),
         panel.grid.major.y = element_blank(),
         panel.grid.major.x = element_blank(),
@@ -142,6 +143,6 @@ d = ggplot(subset(results, var == "Dxs" & time %in% from_to), aes(x=time)) +
 plot = (a|b|c|d)
 aspect_ratio = 2
 
-tiff(here("plots", "00_fit.tiff"),  width = 14, height = 5, units = 'in', res = 200)
+png(here("plots", "00_fit.png"),  width = 14, height = 5, units = 'in', res = 1000)
 print(plot)
 dev.off()
