@@ -72,7 +72,8 @@ inty1ctrly4 <- data.frame(type = 'Intervention Y1 v Control Y4',time = 2028, val
                          lo = abs(summary(prpdf)[[5]]), hi = abs(summary(prpdf)[[2]]))
 
 # Comparison graph
-act <- import(here("outputs","act3","act3.Rdata"))
+act <- import(here("outputs","act3","act3_ultra.Rdata"))
+# act <- import(here("outputs","act3","act3_mtbrif.Rdata"))
 base <- import(here("outputs","results","r00_base.Rdata"))
 comp <- rbind(inty1inty4, inty1ctrly4)
 
